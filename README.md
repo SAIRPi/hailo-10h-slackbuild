@@ -8,4 +8,4 @@ Build scripts and process are currently being revised for public release. They w
 
 [SAIRPi Project](https://sairpi.penthux.net)
 
-Hailo-10H M.2 AI Accelerator Module - [Hailo Technologies](https://www.ebay.co.uk/usr/car_36724](https://hailo.ai/products/ai-accelerators/hailo-10h-m-2-ai-acceleration-module/)
+Hailo-10H M.2 AI Accelerator Module - [Hailo Technologies](https://hailo.ai/products/ai-accelerators/hailo-10h-m-2-ai-acceleration-module/)
