@@ -1,0 +1,104 @@
+#!/bin/bash
+#
+# SAIRPi Project - Slackware AI on Raspberry Pi
+# https://sairpi.penthux.net
+#
+# Copyright (c) 2026 SAIRPi Project
+#
+# HAILO.SlackBuild
+#
+# hailort-10h-firmware.SlackBuild
+#
+###
+
+# Preconditions
+[ ! -f "../.settings.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : SETTINGS file not found!" && exit 1
+[ ! -f "../.functions.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : FUNCTIONS file not found!" && exit 1
+
+# Load settings
+. "../.settings.inc"
+
+# Load functions
+. "../.functions.inc"
+
+# Variables
+CWD="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+PRGNAM="hailort-10h-firmware"
+PROCSS="$(basename "${BASH_SOURCE[0]}")"
+
+# Define HailoRT version from source CMakeLists.txt
+getHAILORT_VERSION
+
+# Firmware source
+HAILORT_FW_URL="https://hailo-hailort.s3.eu-west-2.amazonaws.com/Hailo10H/${HAILORT_VERSION}/FW/hailo10h_fw.tar.gz"
+HAILORT_FW_TARBALL="hailo10h_fw.tar.gz"
+HAILORT_FW_BUILDDIR="${PKGTMP}/hailo10h-fw-${HAILORT_VERSION}_build"
+
+# Package variables
+PKGDIR_H10H_FW="${PKGTMP}/${PRGNAM}"
+OUTPUT="${TMP}"
+
+# Special bulletin
+set -e
+IFS="$(printf '\n\t')"
+
+# Start clean
+log "Creating ${HAINAM}-10H firmware package directories ..."
+rm -rf "${PKGDIR_H10H_FW}" "${HAILORT_FW_BUILDDIR}"
+mkdir -p "${PKGDIR_H10H_FW}/lib/firmware/hailo/hailo10h" "${PKGDIR_H10H_FW}/install"
+mkdir -p "${HAILORT_FW_BUILDDIR}" "${PKGDIR_H10H_FW}/usr/doc/${PRGNAM}-${HAILORT_VERSION}/"
+log "${HAINAM}-10H firmware package directories created ..."
+
+# Download Hailo-10H firmware tarball
+log "Downloading ${HAINAM}-10H firmware ${HAILORT_VERSION} ..."
+wget --no-check-certificate -q "${HAILORT_FW_URL}" -O "${HAILORT_FW_BUILDDIR}/${HAILORT_FW_TARBALL}"
+log "${HAINAM}-10H firmware downloaded ..."
+
+# Extract Hailo-10H firmware
+log "Extracting ${HAINAM}-10H firmware ..."
+tar -xzf "${HAILORT_FW_BUILDDIR}/${HAILORT_FW_TARBALL}" -C "${HAILORT_FW_BUILDDIR}"
+rm "${HAILORT_FW_BUILDDIR}/${HAILORT_FW_TARBALL}"
+log "${HAINAM}-10H firmware extracted ..."
+
+# Copy Hailo-10H firmware to pkg build dir
+log "Copying ${HAINAM}-10H firmware files ..."
+cp -a "${HAILORT_FW_BUILDDIR}/"* "${PKGDIR_H10H_FW}/lib/firmware/hailo/hailo10h/"
+log "${HAINAM}-10H firmware files copied to package directory ..."
+
+# Copy build script to pkg usr/doc
+cp -a "${CWD}/${PROCSS}" "${PKGDIR_H10H_FW}/usr/doc/${PRGNAM}-${HAILORT_VERSION}/"
+log "${PROCSS} copied to usr/doc ..."
+
+# Create Hailo-10H firmware doinst.sh
+log "Creating ${RPIVERS} boot firmware doinst.sh ..."
+cp -a "${CWD}/doinst.sh" "${PKGDIR_H10H_FW}/install/doinst.sh"
+log "${RPIVERS} boot firmware doinst.sh created ..."
+
+# Create Hailo-10H firmware package slack-desc file
+# Replace TAGS in slack-desc and copy to pkg dir
+log "Creating ${RPIVERS} boot firmware slack-desc ..."
+sed -e "s/@MARQUE@/${MARQUE}/g" \
+    -e "s/@HAINAM@/${HAINAM}/g" \
+    -e "s/@HAILOW@/${HAILOW}rt/g" \
+    -e "s|@SAIRPiURL@|${SAIRPiURL}|g" \
+    -e "s/@BUILDREF_ID@/${BUILDREF_ID}/g" \
+	"${CWD}/slack-desc" > "${PKGDIR_H10H_FW}/install/slack-desc"
+log "New ${RPIVERS} boot firmware slack-desc created ..."
+
+# Create Hailo-10H firmware package
+log "Creating ${PRGNAM}-${HAILORT_VERSION}-${ARCH}-${BUILD}_${TAG}.txz ..."
+cd "${PKGDIR_H10H_FW}"
+/sbin/makepkg -l y -c n "${OUTPUT}/${PRGNAM}-${HAILORT_VERSION}-${ARCH}-${BUILD}_${TAG}.txz"
+log "${HAINAM}-10H firmware package created ..."
+
+# Create package checksum
+log "Creating ${PRGNAM}-${HAILORT_VERSION}-${ARCH}-${BUILD}_${TAG}.md5 ..."
+cd "${OUTPUT}"
+/bin/md5sum "${PRGNAM}-${HAILORT_VERSION}-${ARCH}-${BUILD}_${TAG}.txz" > \
+  "${OUTPUT}/${PRGNAM}-${HAILORT_VERSION}-${ARCH}-${BUILD}_${TAG}.md5"
+log "${HAINAM}-10H firmware package checksum created ..."
+
+# Done
+exit 0
+
+# EOF<*>

@@ -1,0 +1,19 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description.  Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in.  You must
+# make exactly 11 lines for the formatting to be correct.  It's also
+# customary to leave one space after the ':' except on otherwise blank lines.
+
+                   |-----handy-ruler------------------------------------------------------|
+kernel-headers-@RPIVERS@: kernel-headers-@RPIVERS@ (Linux kernel @VERSION@)
+kernel-headers-@RPIVERS@:
+kernel-headers-@RPIVERS@: Linux kernel @VERSION@ include files for Raspberry Pi @PIVER@.
+kernel-headers-@RPIVERS@: Required for userspace programs when compiling most Linux
+kernel-headers-@RPIVERS@: system software. For more details on kernel headers see:
+kernel-headers-@RPIVERS@: https://docs.kernel.org/kbuild/headers_install.html
+kernel-headers-@RPIVERS@:
+kernel-headers-@RPIVERS@:
+kernel-headers-@RPIVERS@: @MARQUE@ Project - @SAIRPiURL@
+kernel-headers-@RPIVERS@: Build Ref: @BUILDREF_ID@
+kernel-headers-@RPIVERS@:

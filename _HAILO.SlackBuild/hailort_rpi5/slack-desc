@@ -1,0 +1,20 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description.  Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in.  You must
+# make exactly 11 lines for the formatting to be correct.  It's also
+# customary to leave one space after the ':' except on otherwise blank lines.
+
+            |-----handy-ruler------------------------------------------------------|
+@HAILOW@_@RPIVERS@: @HAILOW@_@RPIVERS@ (@HAINAM@ AI Runtime library for RPi @PIVER@)
+@HAILOW@_@RPIVERS@:
+@HAILOW@_@RPIVERS@: @HAINAM@RT is the runtime software library for @HAINAM@ AI Accelerator
+@HAILOW@_@RPIVERS@: hardware. This package provides lib@HAILOW@, libhailopp, C/C++
+@HAILOW@_@RPIVERS@: API, and the @HAILOW@cli tool for interacting with @HAINAM@'s AI
+@HAILOW@_@RPIVERS@: Accelerator hardware.
+@HAILOW@_@RPIVERS@:
+@HAILOW@_@RPIVERS@: See: https://hailo.ai/products/hailo-software/
+@HAILOW@_@RPIVERS@:
+@HAILOW@_@RPIVERS@:
+@HAILOW@_@RPIVERS@: @MARQUE@ Project - @SAIRPiURL@
+@HAILOW@_@RPIVERS@: Build Ref: @BUILDREF_ID@

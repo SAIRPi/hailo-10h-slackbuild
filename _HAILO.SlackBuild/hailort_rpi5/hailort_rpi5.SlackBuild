@@ -1,0 +1,123 @@
+#!/bin/bash
+#
+# SAIRPi Project - Slackware AI on Raspberry Pi
+# https://sairpi.penthux.net
+#
+# Copyright (c) 2026 SAIRPi Project
+#
+# HAILO.SlackBuild
+#
+# hailort_rpi5.SlackBuild
+#
+###
+
+
+# Preconditions
+[ ! -f "../.settings.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : SETTINGS file not found!" && exit 1
+[ ! -f "../.functions.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : FUNCTIONS file not found!" && exit 1
+
+# Load settings
+. "../.settings.inc"
+
+# Load functions
+. "../.functions.inc"
+
+# Variables
+CWD="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+PRGNAM="${HAILOW}rt_${RPIVERS}"
+PROCSS="$(basename "${BASH_SOURCE[0]}")"
+
+# Define HailoRT version from source CMakeLists.txt
+getHAILORT_VERSION
+
+# Package variables
+PKGDIR_HAILORT="${PKGTMP}/${PRGNAM}"
+OUTPUT="${TMP}"
+
+# HailoRT out-of-source build directory (in-source builds explicitly forbidden)
+HAILORT_BUILD_DIR="${PKGTMP}/${HAILOW}rt_source_build"
+
+# Special bulletin
+set -e
+IFS="$(printf '\n\t')"
+
+# Start clean
+log "Preparing ${HAINAM}RT package directory ..."
+rm -rf "${PKGDIR_HAILORT}"
+mkdir -p "${PKGDIR_HAILORT}/install" "${PKGDIR_HAILORT}/usr/doc/${PRGNAM}-${HAILORT_VERSION}/"
+log "${HAINAM}RT package directory: ${PKGDIR_HAILORT} ..."
+log "Create ${HAINAM}RT out-of-source build directory ..."
+mkdir -p "${HAILORT_BUILD_DIR}"
+log "${HAINAM}RT build directory: ${HAILORT_BUILD_DIR} ..."
+
+# Apply patches to HailoRT source
+log "Patching ${HAINAM}RT source ..."
+patch -d "${HAILORT_SOURCE_DIR}" -p1 --forward --ignore-whitespace \
+  -i "${CWD}/patch/hailort-protobuf-cmake-aarch64-lib64.patch" \
+  || log "Patch hailort-protobuf-cmake-aarch64-lib64 already applied - skipped ..."
+log "${HAINAM}RT source patched ..."
+
+# Configure HailoRT with legacy cmake
+if [ ! -f "${HAILORT_BUILD_DIR}/build.ninja" ]; then
+  log "Configuring ${HAINAM}RT with cmake ${CMAKE_LEGACY_VER} ..."
+  cmake -S "${HAILORT_SOURCE_DIR}" -B "${HAILORT_BUILD_DIR}" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DHAILO_BUILD_TOOLS=OFF \
+    -DHAILO_BUILD_GSTREAMER=OFF \
+    -DHAILO_BUILD_EXAMPLES=OFF \
+    -DHAILO_BUILD_UT=OFF \
+    -DHAILO_BUILD_GENAI_SERVER=OFF \
+    -DHAILO_BUILD_HAILORT_SERVER=OFF \
+    -DCMAKE_INSTALL_PREFIX=/usr
+  log "${HAINAM}RT cmake configuration completed ..."
+
+  # Build HailoRT
+  log "Building ${HAINAM}RT ..."
+  cmake --build "${HAILORT_BUILD_DIR}" --parallel $(nproc)
+  log "${HAINAM}RT build completed ..."
+fi
+
+# Install HailoRT into package directory
+log "Installing ${HAINAM}RT to ${PKGDIR_HAILORT} ..."
+DESTDIR="${PKGDIR_HAILORT}" cmake --install "${HAILORT_BUILD_DIR}"
+log "${HAINAM}RT successfully installed into package directory ..."
+
+# Copy build script to pkg usr/doc
+cp -a "${CWD}/${PROCSS}" "${PKGDIR_HAILORT}/usr/doc/${PRGNAM}-${HAILORT_VERSION}/"
+log "${PROCSS} copied to usr/doc ..."
+
+# Create HailoRT doinst.sh
+log "Creating HailoRT package doinst.sh ..."
+cp -a "${CWD}/doinst.sh" "${PKGDIR_HAILORT}/install/doinst.sh"
+log "HailoRT package doinst.sh created ..."
+
+# Create HailoRT package slack-desc file
+# Replace TAGS in slack-desc and copy to pkg dir
+log "Creating HailoRT package slack-desc ..."
+sed -e "s/@MARQUE@/${MARQUE}/g" \
+    -e "s/@HAILOW@/${HAILOW}rt/g" \
+    -e "s/@HAINAM@/${HAINAM}/g" \
+    -e "s/@RPIVERS@/${RPIVERS}/g" \
+    -e "s/@PIVER@/${PIVER}/g" \
+    -e "s|@SAIRPiURL@|${SAIRPiURL}|g" \
+    -e "s/@BUILDREF_ID@/${BUILDREF_ID}/g" \
+	"${CWD}/slack-desc" > "${PKGDIR_HAILORT}/install/slack-desc"
+log "New HailoRT package slack-desc created ..."
+
+# Create HailoRT package
+log "Creating ${PRGNAM}-${HAILORT_VERSION}-${ARCH}-${BUILD}_${TAG}.txz ..."
+cd "${PKGDIR_HAILORT}"
+/sbin/makepkg -l y -c n "${OUTPUT}/${PRGNAM}-${HAILORT_VERSION}-${ARCH}-${BUILD}_${TAG}.txz"
+log "${HAINAM}RT package created ..."
+
+# Create package checksum
+log "Creating ${PRGNAM}-${HAILORT_VERSION}-${ARCH}-${BUILD}_${TAG}.md5 ..."
+cd "${OUTPUT}"
+/bin/md5sum "${PRGNAM}-${HAILORT_VERSION}-${ARCH}-${BUILD}_${TAG}.txz" > \
+  "${OUTPUT}/${PRGNAM}-${HAILORT_VERSION}-${ARCH}-${BUILD}_${TAG}.md5"
+log "${HAINAM}RT package checksum created ..."
+
+# Done
+exit 0
+
+# EOF<*>

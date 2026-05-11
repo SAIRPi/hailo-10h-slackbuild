@@ -1,0 +1,19 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description.  Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in.  You must
+# make exactly 11 lines for the formatting to be correct.  It's also
+# customary to leave one space after the ':' except on otherwise blank lines.
+
+         |-----handy-ruler------------------------------------------------------|
+@RPIVERS@-boot: @RPIVERS@-boot (Raspberry Pi @PIVER@ boot-firmware blobs)
+@RPIVERS@-boot:
+@RPIVERS@-boot: Proprietary boot-firmware blobs for the Raspberry Pi @PIVER@. These blobs
+@RPIVERS@-boot: are essential for booting the device. For more information see the
+@RPIVERS@-boot: /boot/LICENCE.broadcom file. The latest boot-firmware is available
+@RPIVERS@-boot: from the official Raspberry Pi GitHub repository:
+@RPIVERS@-boot: https://github.com/raspberrypi/firmware
+@RPIVERS@-boot:
+@RPIVERS@-boot:
+@RPIVERS@-boot: @MARQUE@ Project - @SAIRPiURL@
+@RPIVERS@-boot: Build Ref: @BUILDREF_ID@

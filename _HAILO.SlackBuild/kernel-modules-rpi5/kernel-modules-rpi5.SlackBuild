@@ -1,0 +1,108 @@
+#!/bin/bash
+#
+# SAIRPi Project - Slackware AI on Raspberry Pi
+# https://sairpi.penthux.net
+#
+# Copyright (c) 2026 SAIRPi Project
+#
+# HAILO.SlackBuild
+#
+# kernel-modules-rpi5.SlackBuild
+#
+###
+
+
+# Preconditions
+[ ! -f "../.settings.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : SETTINGS file not found!" && exit 1
+[ ! -f "../.functions.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : FUNCTIONS file not found!" && exit 1
+
+# Load settings
+. "../.settings.inc"
+
+# Load functions
+. "../.functions.inc"
+
+# Variables
+CWD="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+PRGNAM="kernel-modules-${RPIVERS}"
+PROCSS="$(basename "${BASH_SOURCE[0]}")"
+OUTPUT="${TMP}"
+
+# Package dirs
+PKGDIR_MODULES="${PKGTMP}/${PRGNAM}"
+
+# Unset ARCH while building kernel modules
+unset ARCH
+
+# Special bulletin
+set -e
+IFS="$(printf '\n\t')"
+
+# Get Linux source version
+log "Get kernel source version ..."
+getKRNLSRCVERS
+
+# Define Git log format for version output
+cd "${LINUX_SOURCE_DIR}"
+GITVERS=$(git log --format='%h' -n 1)
+log "Linux kernel source Git commit hash: ${GITVERS:?}"
+
+# Clean and create pkg directories
+log "Preparing kernel module package directories ..."
+rm -rf "${PKGDIR_MODULES}" 
+mkdir -p "${PKGDIR_MODULES}" "${PKGDIR_MODULES}/install" 
+mkdir -p "${PKGDIR_MODULES}/usr/doc/${PRGNAM}-${VERSION}/"
+log "Kernel module package directories prepared ..."
+
+# Make kernel modules
+log "Building kernel modules ..."
+make "${MULTIJOB}" LOCALVERSION="-${SAIRPiSUFFIX}" modules
+
+# Install kernel modules into package directory
+log "Installing kernel modules into package directory..."
+make INSTALL_MOD_PATH="${PKGDIR_MODULES}" modules_install
+log "Kernel modules successfully installed into package directory ..."
+
+# Create build and source symlinks in modules pkg directory
+log "Creating kernel modules build source symlinks ..."
+cd "${PKGDIR_MODULES}/lib/modules/${MODVER}"
+rm -rf build && ln -s /usr/src/linux build
+rm -rf source && ln -s /usr/src/linux source
+log "Kernel modules build source symlinks created ..."
+
+# Copy build script to pkg usr/doc
+cp -a "${CWD}/${PROCSS}" "${PKGDIR_MODULES}/usr/doc/${PRGNAM}-${VERSION}/"
+log "${PROCSS} copied to usr/doc ..."
+
+# Create kernel modules doinst.sh
+log "Creating kernel-modules-${RPIVERS} package doinst.sh ..."
+sed -e "s/@MODVER@/${MODVER}/g" \
+  "${CWD}/doinst.sh" > "${PKGDIR_MODULES}/install/doinst.sh"
+log "Created kernel-modules-${RPIVERS} doinst.sh ..."
+
+# Create kernel modules pkg slack-desc file
+# Replace TAGS in slack-desc and copy to pkg dir
+log "Creating kernel-modules-${RPIVERS} package slack-desc ..."
+sed -e "s/@MARQUE@/${MARQUE}/g" \
+    -e "s/@RPIVERS@/${RPIVERS}/g" \
+	-e "s/@VERSION@/${VERSION}/g" \
+    -e "s|@SAIRPiURL@|${SAIRPiURL}|g" \
+    -e "s/@BUILDREF_ID@/${BUILDREF_ID}/g" \
+	"${CWD}/slack-desc" > "${PKGDIR_MODULES}/install/slack-desc"
+log "New kernel-modules-${RPIVERS} slack-desc file created ..."
+
+# Create kernel-modules package
+log "Creating ${PRGNAM}-${VERSION}-${SUBARCH}-${BUILD}_${TAG}.txz ..."
+cd "${PKGDIR_MODULES}"
+/sbin/makepkg -l y -c n "${OUTPUT}/${PRGNAM}-${VERSION}-${SUBARCH}-${BUILD}_${TAG}.txz"
+log "Kernel modules package created ..."
+cd "${OUTPUT}"
+/bin/md5sum "${PRGNAM}-${VERSION}-${SUBARCH}-${BUILD}_${TAG}.txz" > \
+  "${OUTPUT}/${PRGNAM}-${VERSION}-${SUBARCH}-${BUILD}_${TAG}.md5"
+log "Kernel modules package checksum created ..."
+
+# Done
+log "Linux kernel modules build, install, and packaging completed ..."
+exit 0
+
+# EOF<*>

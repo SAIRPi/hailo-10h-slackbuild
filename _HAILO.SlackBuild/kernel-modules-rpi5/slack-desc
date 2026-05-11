@@ -1,0 +1,19 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description.  Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in.  You must
+# make exactly 11 lines for the formatting to be correct.  It's also
+# customary to leave one space after the ':' except on otherwise blank lines.
+
+                   |-----handy-ruler------------------------------------------------------|
+kernel-modules-@RPIVERS@: kernel-modules-@RPIVERS@ (Linux kernel @VERSION@)
+kernel-modules-@RPIVERS@:
+kernel-modules-@RPIVERS@: Kernel modules are pieces of object code that can be
+kernel-modules-@RPIVERS@: dynamically loaded into the Linux kernel to provide new
+kernel-modules-@RPIVERS@: functions. A lot modules provide support for devices
+kernel-modules-@RPIVERS@: such as Wi-Fi adapters, sound devices, etc. Modules can
+kernel-modules-@RPIVERS@: be loaded via the '/etc/rc.d/rc.modules' file.
+kernel-modules-@RPIVERS@:
+kernel-modules-@RPIVERS@:
+kernel-modules-@RPIVERS@: @MARQUE@ Project - @SAIRPiURL@
+kernel-modules-@RPIVERS@: Build Ref: @BUILDREF_ID@

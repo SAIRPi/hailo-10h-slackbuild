@@ -1,0 +1,19 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description.  Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in.  You must
+# make exactly 11 lines for the formatting to be correct.  It's also
+# customary to leave one space after the ':' except on otherwise blank lines.
+
+                    |-----handy-ruler--------------------------------------------|
+@HAILOW@-nnc-drv-@RPIVERS@: ${HAILOW}-nnc-drv-@RPIVERS@ (NNC kernel driver)
+@HAILOW@-nnc-drv-@RPIVERS@:
+@HAILOW@-nnc-drv-@RPIVERS@: Integrated NNC kernel driver for @HAINAM@-10H AI Accelerator
+@HAILOW@-nnc-drv-@RPIVERS@: Module on the Raspberry Pi @PIVER@.
+@HAILOW@-nnc-drv-@RPIVERS@:
+@HAILOW@-nnc-drv-@RPIVERS@: See: https://hailo.ai/products/ai-accelerators/
+@HAILOW@-nnc-drv-@RPIVERS@:
+@HAILOW@-nnc-drv-@RPIVERS@:
+@HAILOW@-nnc-drv-@RPIVERS@: @MARQUE@ Project - @SAIRPiURL@
+@HAILOW@-nnc-drv-@RPIVERS@: Build Ref: @BUILDREF_ID@
+@HAILOW@-nnc-drv-@RPIVERS@:

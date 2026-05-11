@@ -1,0 +1,123 @@
+#!/bin/bash
+#
+# SAIRPi Project - Slackware AI on Raspberry Pi
+# https://sairpi.penthux.net
+#
+# Copyright (c) 2026 SAIRPi Project
+#
+# HAILO.SlackBuild
+#
+# rpi5-boot-firmware.SlackBuild
+#
+###
+
+
+# Preconditions
+[ ! -f "../.settings.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : SETTINGS file not found!" && exit 1
+[ ! -f "../.functions.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : FUNCTIONS file not found!" && exit 1
+
+# Load settings
+. "../.settings.inc"
+
+# Load functions
+. "../.functions.inc"
+
+# Variables
+CWD="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+PRGNAM="${RPIVERS}-boot"
+VERSION="firmware"
+PROCSS="$(basename "${BASH_SOURCE[0]}")"
+
+# Package variables
+PKGDIR_BOOTFW="${PKGTMP}/${PRGNAM}-${VERSION}"
+OUTPUT="${TMP}"
+
+# Special bulletin
+set -e
+IFS="$(printf '\n\t')"
+
+# Define Git log format for version output
+cd "${FIRMWARE_SOURCE_DIR}"/boot
+GITVERS=$(git log --format='%h' -n 1)
+log "${RPIVERS} boot firmware Git commit hash: ${GITVERS:?}"
+
+# Clean and create pkg directory
+log "Preparing RPi boot firmware package directory ..."
+rm -rf "${PKGDIR_BOOTFW}"
+mkdir -p "${PKGDIR_BOOTFW}/boot" "${PKGDIR_BOOTFW}/install"
+log "RPi boot firmware package directory: ${PKGDIR_BOOTFW} ..."
+
+# Copy all RPi firmware files to pkg directory
+log "Copying ${RPIVERS} boot firmware files ..."
+cp -a "${FIRMWARE_SOURCE_DIR}"/boot/*.elf "${PKGDIR_BOOTFW}/boot/"
+cp -a "${FIRMWARE_SOURCE_DIR}"/boot/*.dat "${PKGDIR_BOOTFW}/boot/"
+cp -a "${FIRMWARE_SOURCE_DIR}"/boot/*.dtb "${PKGDIR_BOOTFW}/boot/"
+cp -a "${FIRMWARE_SOURCE_DIR}"/boot/bootcode.bin "${PKGDIR_BOOTFW}/boot/"
+cp -a "${FIRMWARE_SOURCE_DIR}"/boot/overlays "${PKGDIR_BOOTFW}/boot/"
+cp -a "${FIRMWARE_SOURCE_DIR}"/boot/LICENCE.broadcom "${PKGDIR_BOOTFW}/boot/"
+cp -a "${FIRMWARE_SOURCE_DIR}"/boot/COPYING.linux "${PKGDIR_BOOTFW}/boot/"
+log "${RPIVERS} boot firmware files copied ..."
+
+# Install RPi Ltd. licence files to usr/doc
+log "Copying Raspberry Pi Ltd. licence files to usr/doc ..."
+mkdir -p "${PKGDIR_BOOTFW}/usr/doc/${PRGNAM}-${VERSION}"
+cp -a "${FIRMWARE_SOURCE_DIR}"/boot/LICENCE.broadcom \
+  "${FIRMWARE_SOURCE_DIR}"/boot/COPYING.linux \
+  "${PKGDIR_BOOTFW}/usr/doc/${PRGNAM}-${VERSION}/"
+log "Raspberry Pi Ltd. licence files installed ..."
+
+# Copy build script to pkg usr/doc
+cp -a "${CWD}/${PROCSS}" "${PKGDIR_BOOTFW}/usr/doc/${PRGNAM}-${VERSION}/"
+log "${PROCSS} copied to usr/doc ..."
+
+# Replace TAGS in config.txt.new and copy to pkg dir
+log "Creating ${RPIVERS} boot firmware config.txt.new ..."
+sed -e "s|@SAIRPiURL@|${SAIRPiURL}|g" \
+    -e "s|@CONFIGDS@|$(date '+%F')|g" \
+    -e "s|@PIVER@|${PIVER}|g" \
+    "${CWD}/config.txt.new" > "${PKGDIR_BOOTFW}/boot/config.txt.new"
+log "${RPIVERS} boot firmware config.txt.new created ..."
+
+# Create boot firmware doinst.sh
+log "Creating ${RPIVERS} boot firmware doinst.sh ..."
+cp -a "${CWD}/doinst.sh" "${PKGDIR_BOOTFW}/install/doinst.sh"
+log "${RPIVERS} boot firmware doinst.sh created ..."
+
+# Replace TAGS in slack-desc and copy to pkg dir
+log "Creating ${RPIVERS} boot firmware slack-desc ..."
+sed -e "s/@MARQUE@/${MARQUE}/g" \
+    -e "s/@RPIVERS@/${RPIVERS}/g" \
+    -e "s/@PIVER@/${PIVER}/g" \
+    -e "s|@SAIRPiURL@|${SAIRPiURL}|g" \
+    -e "s/@BUILDREF_ID@/${BUILDREF_ID}/g" \
+	"${CWD}/slack-desc" > "${PKGDIR_BOOTFW}/install/slack-desc"
+log "New ${RPIVERS} boot firmware slack-desc created ..."
+
+# Add build version file into pkg dir /boot
+log "Creating /boot/version-${PRGNAM}.txt file ..."
+{
+echo "Package: ${PRGNAM}-$VERSION-${ARCH}-${BUILD}_${TAG}.${PKGTYPE:-txz}" 
+echo "Download: ${SAIRPi_GITHUB_REPO_URL}/hailo-10h-slackBuild" 
+echo "Build ref: ${BUILDREF_ID}" 
+echo "Build date: $(date '+%F %T %Z')" 
+echo "Git commit hash: ${GITVERS:?}" 
+} >> "${PKGDIR_BOOTFW}/boot/version-"${PRGNAM}".txt"
+
+# Create boot firmware pkg
+log "Creating ${PRGNAM}-${VERSION}-${ARCH}-${BUILD}_${TAG}.txz ..."
+cd "${PKGDIR_BOOTFW}"
+/sbin/makepkg -l y -c n "${OUTPUT}/${PRGNAM}-${VERSION}-${ARCH}-${BUILD}_${TAG}.txz"
+log "${RPIVERS} boot firmware package created ..."
+
+# Create boot firmware pkg checksum
+log "Creating ${PRGNAM}-${VERSION}-${ARCH}-${BUILD}_${TAG}.md5 ..."
+cd "${OUTPUT}"
+/bin/md5sum "${PRGNAM}-${VERSION}-${ARCH}-${BUILD}_${TAG}.txz" > \
+  "${OUTPUT}/${PRGNAM}-${VERSION}-${ARCH}-${BUILD}_${TAG}.md5"
+log "RPi boot firmware package checksum created ..."
+
+# Done
+log "Raspberry Pi boot firmware package completed ..."
+exit 0
+
+# EOF<*>

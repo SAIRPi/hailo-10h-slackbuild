@@ -1,0 +1,12 @@
+--- a/hailort/cmake/external/protobuf.cmake
++++ b/hailort/cmake/external/protobuf.cmake
+@@ -41,7 +41,9 @@
+         if(WIN32)
+             set(PROTOBUF_CONFIG_DIR ${PROTOBUF_INSTALL_DIR}/cmake)
+-        else()
+-            set(PROTOBUF_CONFIG_DIR ${PROTOBUF_INSTALL_DIR}/lib/cmake/protobuf)
++        elseif(EXISTS ${PROTOBUF_INSTALL_DIR}/lib64/cmake/protobuf)
++            set(PROTOBUF_CONFIG_DIR ${PROTOBUF_INSTALL_DIR}/lib64/cmake/protobuf)
++        else()
++            set(PROTOBUF_CONFIG_DIR ${PROTOBUF_INSTALL_DIR}/lib/cmake/protobuf)
+         endif()

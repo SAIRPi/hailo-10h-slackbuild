@@ -1,0 +1,119 @@
+#!/bin/bash
+#
+# SAIRPi Project - Slackware AI on Raspberry Pi
+# https://sairpi.penthux.net
+#
+# Copyright (c) 2026 SAIRPi Project
+#
+# HAILO.SlackBuild
+#
+# hailort-nnc-drv.SlackBuild
+#
+###
+
+
+# Preconditions
+[ ! -f "../.settings.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : SETTINGS file not found!" && exit 1
+[ ! -f "../.functions.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : FUNCTIONS file not found!" && exit 1
+
+# Load settings
+. "../.settings.inc"
+
+# Load functions
+. "../.functions.inc"
+
+# Variables
+CWD="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+PRGNAM="hailort-nnc-drv-${RPIVERS}"
+PROCSS="$(basename "${BASH_SOURCE[0]}")"
+
+# Define HailoRT version from source CMakeLists.txt
+log "Getting ${HAINAM}RT source version ..."
+getHAILORT_VERSION
+log "${HAINAM}RT version: ${HAILORT_VERSION} ..."
+
+# Package package directory
+PKGDIR_NNC="${PKGTMP}/${PRGNAM}"
+OUTPUT="${TMP}"
+
+# Driver directories
+PCIE_DRIVER_DIR="${HAILORT_DRIVERS_DIR}/linux/pcie"
+INTEGRATED_NNC_DIR="${HAILORT_DRIVERS_DIR}/linux/integrated_nnc"
+
+# Define kernel source version
+log "Getting kernel source version ..."
+getKRNLSRCVERS
+log "Kernel version: ${MODVER} ..."
+
+# Special bulletin
+set -e
+IFS="$(printf '\n\t')"
+
+# Clean and create package directories
+log "Preparing ${HAINAM} integrated NNC driver package directory ..."
+rm -rf "${PKGDIR_NNC}"
+mkdir -p "${PKGDIR_NNC}"/install "${PKGDIR_NNC}/usr/doc/${PRGNAM}-${VERSION}/"
+
+# Apply patches to HailoRT driver source
+log "Applying ${HAINAM}RT driver source patches ..."
+patch -d "${HAILORT_DRIVERS_DIR}" -p1 --forward --ignore-whitespace \
+  -i "${CWD}/patch/hailort-drivers-del-timer-sync-kernel-6.15.patch" \
+  || log "Patch hailort-drivers-del-timer-sync-kernel-6.15 already applied or skipped ..."
+log "${HAINAM}RT driver source patches applied ..."
+
+# Build HailoRT integrated NNC driver
+log "Building ${HAINAM} integrated NNC driver (hailo_integrated_nnc.ko) ..."
+make -C "${INTEGRATED_NNC_DIR}" \
+  ARCH=arm64 \
+  kernelver="${MODVER}" \
+  KERNEL_DIR="/lib/modules/${MODVER}/build" \
+  "${MULTIJOB}" all
+log "${HAINAM} integrated NNC driver build completed ..."
+
+# Copy build script to pkg usr/doc
+cp -a "${CWD}/${PROCSS}" "${PKGDIR_NNC}/usr/doc/${PRGNAM}-${VERSION}/"
+log "${PROCSS} copied to usr/doc ..."
+
+# Install HailoRT integrated NNC driver into package directory
+log "Installing ${HAINAM} integrated NNC driver to ${PKGDIR_NNC} ..."
+make -C "/lib/modules/${MODVER}/build" \
+  M="${INTEGRATED_NNC_DIR}" \
+  INSTALL_MOD_PATH="${PKGDIR_NNC}" \
+  modules_install
+log "${HAINAM} integrated NNC driver installed ..."
+
+# Create hailort nnc drv doinst.sh
+log "Creating HailoRT NNC drv package doinst.sh ..."
+sed -e "s/@MODVER@/${MODVER}/g" \
+  "${CWD}/doinst.sh" > "${PKGDIR_NNC}/install/doinst.sh"
+log "HailoRT NNC drv package doinst.sh created ..."
+
+# Replace TAGS in slack-desc and copy to pkg dir
+log "Creating HailoRT NNC drv package slack-desc ..."
+sed -e "s/@MARQUE@/${MARQUE}/g" \
+    -e "s/@RPIVERS@/${RPIVERS}/g" \
+	-e "s/@HAILOW@/${HAILOW}rt/g" \
+	-e "s/@HAINAM@/${HAINAM}/g" \
+    -e "s/@PIVER@/${PIVER}/g" \
+    -e "s|@SAIRPiURL@|${SAIRPiURL}|g" \
+    -e "s/@BUILDREF_ID@/${BUILDREF_ID}/g" \
+	"${CWD}/slack-desc" > "${PKGDIR_NNC}/install/slack-desc"
+log "New HailoRT NNC drv package slack-desc created ..."
+
+# Create integrated NNC driver package
+log "Creating ${PRGNAM}-${HAILORT_VERSION}-${ARCH}-${BUILD}_${TAG}.txz ..."
+cd "${PKGDIR_NNC}"
+/sbin/makepkg -l y -c n "${OUTPUT}/${PRGNAM}-${HAILORT_VERSION}-${ARCH}-${BUILD}_${TAG}.txz"
+log "${HAINAM} integrated NNC driver package created ..."
+
+# Create integrated NNC driver package checksum
+log "Creating ${PRGNAM}-${HAILORT_VERSION}-${ARCH}-${BUILD}_${TAG}.md5 ..."
+cd "${OUTPUT}"
+/bin/md5sum "${PRGNAM}-${HAILORT_VERSION}-${ARCH}-${BUILD}_${TAG}.txz" > \
+  "${OUTPUT}/${PRGNAM}-${HAILORT_VERSION}-${ARCH}-${BUILD}_${TAG}.md5"
+log "${HAINAM} integrated NNC driver package checksum created ..."
+
+# Done
+exit 0
+
+# EOF<*>

@@ -1,0 +1,94 @@
+#!/bin/bash
+#
+# SAIRPi Project - Slackware AI on Raspberry Pi
+# https://sairpi.penthux.net
+#
+# Copyright (c) 2026 SAIRPi Project
+#
+# HAILO.SlackBuild
+#
+# kernel-headers-rpi5.SlackBuild
+#
+###
+
+
+# Preconditions
+[ ! -f "../.settings.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : SETTINGS file not found!" && exit 1
+[ ! -f "../.functions.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : FUNCTIONS file not found!" && exit 1
+
+# Load settings
+. "../.settings.inc"
+
+# Load functions
+. "../.functions.inc"
+
+# Variables
+CWD="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+PRGNAM="kernel-headers-${RPIVERS}"
+PROCSS="$(basename "${BASH_SOURCE[0]}")"
+OUTPUT="${TMP}"
+
+# Package dirs
+PKGDIR_HEADERS="${PKGTMP}/${PRGNAM}"
+
+# Unset ARCH while building kernel headers
+unset ARCH
+
+# Special bulletin
+set -e
+IFS="$(printf '\n\t')"
+
+# Get Linux source version
+log "Get kernel source version ..."
+getKRNLSRCVERS
+
+# Clean and create pkg directories
+log "Preparing kernel package directories ..."
+rm -rf "${PKGDIR_HEADERS}"
+mkdir -p "${PKGDIR_HEADERS}" "${PKGDIR_HEADERS}/install"
+mkdir -p "${PKGDIR_HEADERS}/usr/doc/${PRGNAM}-${VERSION}/"
+log "Kernel headers package directories prepared ..."
+
+# Change directory to Linux source
+cd "${LINUX_SOURCE_DIR}"
+
+# Install kernel headers into pkg directory
+log "Building and installing kernel headers ..."
+make "${MULTIJOB}" headers_install INSTALL_HDR_PATH="${PKGDIR_HEADERS}/usr"
+
+# Copy build script to pkg usr/doc
+cp -a "${CWD}/${PROCSS}" "${PKGDIR_HEADERS}/usr/doc/${PRGNAM}-${VERSION}/"
+log "${PROCSS} copied to usr/doc ..."
+
+# Create kernel doinst.sh
+log "Creating kernel-headers-${RPIVERS} package doinst.sh ..."
+cp -a "${CWD}/doinst.sh" "${PKGDIR_HEADERS}/install/doinst.sh"
+log "Created kernel-headers-${RPIVERS} doinst.sh ..."
+
+# Create kernel headers pkg slack-desc file
+# Replace TAGS in slack-desc and copy to pkg dir
+log "Creating kernel-headers-${RPIVERS} package slack-desc ..."
+sed -e "s/@MARQUE@/${MARQUE}/g" \
+    -e "s/@RPIVERS@/${RPIVERS}/g" \
+	-e "s/@VERSION@/${VERSION}/g" \
+    -e "s/@PIVER@/${PIVER}/g" \
+    -e "s|@SAIRPiURL@|${SAIRPiURL}|g" \
+    -e "s/@BUILDREF_ID@/${BUILDREF_ID}/g" \
+	"${CWD}/slack-desc" > "${PKGDIR_HEADERS}/install/slack-desc"
+log "New kernel-headers-${RPIVERS} slack-desc file created ..."
+
+# Create kernel-headers pkg
+log "Creating ${PRGNAM}-${VERSION}-${SUBARCH}-${BUILD}_${TAG}.txz ..."
+cd "${PKGDIR_HEADERS}"
+/sbin/makepkg -l y -c n "${OUTPUT}/${PRGNAM}-${VERSION}-${SUBARCH}-${BUILD}_${TAG}.txz"
+log "Kernel headers package created ..."
+cd "${OUTPUT}"
+/bin/md5sum "${PRGNAM}-${VERSION}-${SUBARCH}-${BUILD}_${TAG}.txz" > \
+  "${OUTPUT}/${PRGNAM}-${VERSION}-${SUBARCH}-${BUILD}_${TAG}.md5"
+log "Kernel headers package checksum created ..."
+
+# Done
+log "Linux kernel headers build and package completed ..."
+exit 0
+
+# EOF<*>

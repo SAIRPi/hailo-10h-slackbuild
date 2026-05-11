@@ -1,0 +1,8 @@
+--- a/linux/vdma/monitor.c
++++ b/linux/vdma/monitor.c
+@@ -50,5 +50,5 @@
+ void hailo_vdma_monitor_stop(struct hailo_vdma_monitor *monitor)
+ {
+-    del_timer_sync(&monitor->timer);
++    timer_delete_sync(&monitor->timer);
+ }

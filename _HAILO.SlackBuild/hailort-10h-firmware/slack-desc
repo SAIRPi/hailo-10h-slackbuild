@@ -1,0 +1,19 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description.  Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in.  You must
+# make exactly 11 lines for the formatting to be correct.  It's also
+# customary to leave one space after the ':' except on otherwise blank lines.
+
+                  |-----handy-ruler----------------------------------------------|
+@HAILOW@-10h-firmware: @HAILOW@-10h-firmware (@HAINAM@-10H AI Accelerator firmware)
+@HAILOW@-10h-firmware:
+@HAILOW@-10h-firmware: Firmware files for @HAINAM@-10H M.2 AI Accelerator Module.
+@HAILOW@-10h-firmware: Installed to /lib/firmware/@HAILOW@/@HAILOW@10h/ and loaded
+@HAILOW@-10h-firmware: by the @HAILOW@1x_pci kernel driver device probe.
+@HAILOW@-10h-firmware:
+@HAILOW@-10h-firmware: See: https://@HAILOW@.ai/products/ai-accelerators/
+@HAILOW@-10h-firmware:
+@HAILOW@-10h-firmware:
+@HAILOW@-10h-firmware: @MARQUE@ Project - @SAIRPiURL@
+@HAILOW@-10h-firmware: Build Ref: @BUILDREF_ID@

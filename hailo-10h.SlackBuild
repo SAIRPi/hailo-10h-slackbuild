@@ -1,0 +1,217 @@
+#!/bin/bash
+#
+# SAIRPi Project - Slackware AI on Raspberry Pi
+# https://sairpi.penthux.net
+#
+# hailo-10h.SlackBuild host build [stage 1]
+#
+# Slackware AArch64 Linux build process for HailoRT software on the 
+# Hailo-10H AI Accelerator Module installed on a Raspberry Pi 5.
+#
+# hailo-10h.SlackBuild 
+# 2026-04-22 - v0.0.1 - Progenitor
+# 2026-05-11 - v1.0.5 - Updated for public release
+#
+###
+#
+# MIT License
+# 
+# Copyright (c) 2026 SAIRPi Project
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a 
+# copy of this software and associated documentation files (the "Software"), 
+# to deal in the Software without restriction, including without limitation 
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the 
+# Software is furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in 
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
+# IN THE SOFTWARE.
+#
+###
+
+# Preconditions
+[ ! -f ".settings.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : SETTINGS file not found!" && exit 1;
+[ ! -f ".functions.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : FUNCTIONS file not found!" && exit 1;
+
+# Set SAIRPi RELVER release version [datestamp]
+date '+%d%b%y' > "${CWD}/.build-date"
+export RELVER="$(cat < "${CWD}/.build-date")"
+
+# load settings
+. .settings.inc
+
+# load functions
+. .functions.inc
+
+# Vars
+CWD="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+
+# Special bulletin
+set -e
+IFS="$(printf '\n\t')"
+
+# Ensure umount chroot clean-up always happens
+trap umount_chroot EXIT
+
+# Exports
+export BUILDREF_ID
+export LOGFILE="${TMP}/${MARQUE}_BuildLog_$(date '+%Y%m%d-%H%M%S').log"
+
+# Choose to start clean or with existing data
+select_start_seq() {
+  echo ""
+  echo " To start a clean ${HAILOW}-10h.SlackBuild press [Y] ..."
+  echo " To start a ${HAILOW}-10h.SlackBuild using existing data press [K] ..."
+  echo " Or press any other key to EXIT ..."
+  echo ""
+  read -r -n 1 -p " Your choice: " REPLY
+  echo ""
+  case "${REPLY}" in
+    Y|y)
+      echo " Starting a clean ${HAILOW}-10h.SlackBuild ..."
+	  echo " Deleting any existing build data ..."
+	  START_CLEAN="1"
+	  return
+      ;;
+    K|k)
+      echo " Starting ${HAILOW}-10h.SlackBuild and keeping existing data ..."
+	  START_CLEAN="0"
+      return
+      ;;
+    *)
+      echo " ${HAILOW}-10h.SlackBuild cancelled ..."
+      exit 0
+      ;;
+  esac
+}
+
+# Select build start sequence
+select_start_seq
+
+# Start logging
+log_header
+
+# Log HOST system
+log_hostsystem
+
+# Log Build Status
+if [ -d "${CHRDIR}/${LINUX_SOURCE_DIR}" ]; then
+getKRNLSRCVERS
+log_hailobuildstatus
+fi
+
+# Roll the start clean build
+if [ "${START_CLEAN}" = "1" ]; then
+
+  # Delete any existing build data
+  rm -rf "${PKGTMP}" "${CHRDIR}" "${CWD}/pkg"
+  mkdir -p "${PKGTMP}" "${CHRDIR}" "${CWD}/pkg"
+
+  # Copy HAILO.SlackBuild scripts to chroot
+  rsync -a --delete --info=progress2 "${CWD}/_${HAICAP}.SlackBuild" "${CHRDIR}${TMP}"
+  log "Copied ${HAICAP}.SlackBuild scripts to chroot dir ..."  
+  
+  # Download RPi Linux kernel source into chroot
+  getLINUX_SOURCE
+  getKRNLSRCVERS
+  log_hailobuildstatus
+  log "Downloaded Raspberry Pi Linux source ..."
+
+  # Download RPi firmware into chroot
+  getBOOT_FIRMWARE
+  log "Downloaded Raspberry Pi boot-firmware source ..."
+
+  # Download Hailo Runtime source into chroot
+  getHAILORT_SOURCE
+  log "Downloaded ${HAINAM}RT source ..."
+
+  # Download Hailo RT drivers into chroot
+  getHAILORT_DRIVERS
+  log "Downloaded ${HAINAM}RT drivers source ..."
+  
+  # Download SARPi support pkgs
+  get_board_support_packages
+  log "Downloaded SARPi board support packages ..."
+  
+  # Run the chroot PKG FORGE
+  ./chroot-pkg-forge.sh
+  log "Installed all available pkgs into chroot dir ..."  
+  chroot "${CHRDIR}" /bin/bash -c "update-ca-certificates"
+  log "Initialised chroot ca-certificates ..."
+
+  # Install SARPi5_64 system packages
+  ROOT="${CHRDIR}" installpkg pkg/*.t?z
+  log "Installed SARPi5_64 system packages into chroot dir ..."
+ 
+fi
+
+# Check for chroot build files before continuing
+if [ ! -f "${CHRDIR}${TMP}/_${HAICAP}.SlackBuild/${HAILOW}.SlackBuild" ]; then
+  echo -e "\n [!] ERROR : ${HAICAP}.SlackBuild build script not found in ${CHRDIR}${TMP} ...\n"
+  echo -e " [i] Run the ${HAILOW}-10h.SlackBuild process again and start clean by pressing [Y] when prompted ...\n"
+  exit 1
+fi
+
+# Delete any previously built packages
+rm -rf "${CHRDIR}${TMP}"/*{.md5,.t?z}
+log "Deleted any previously built packages in ${CHRDIR}${TMP} ..."
+
+# Copy host /etc/localtime to chroot [no-clobber]
+cp -Ln /etc/localtime "${CHRDIR}/etc/localtime"
+
+# Create cmake-legacy.sh for setting chroot PATH
+cat << 'EOF' > "${CHRDIR}/etc/profile.d/cmake-legacy.sh"
+#!/bin/bash
+#
+# SAIRPi Project - Slackware AI on Raspberry Pi
+# https://sairpi.penthux.net
+#
+# cmake-legacy.sh
+#
+# Adds legacy cmake to PATH for HailoRT build compatibility
+#
+
+# Legacy cmake install directory
+CMAKE_LEGACY_DIR="/usr/local/cmake-3.31"
+
+# Add legacy cmake to PATH if installed
+if [ -d "${CMAKE_LEGACY_DIR}/bin" ]; then
+  export PATH="${CMAKE_LEGACY_DIR}/bin:${PATH}"
+fi
+EOF
+
+# Make chroot cmake-legacy.sh executable
+chmod 0755 "${CHRDIR}/etc/profile.d/cmake-legacy.sh"
+log "Created cmake-legacy.sh in chroot /etc/profile.d/ ..."
+
+# Mount chroot and initiate build process
+mount_chroot
+log "Starting ${HAINAM}.SlackBuild chroot build ..."
+cp -a "${LOGFILE}" "${CHRDIR}${TMP}"
+LOGFILE="${LOGFILE}" BUILDREF_ID="${BUILDREF_ID}" RELVER="${RELVER}" \
+chroot "${CHRDIR}" /bin/bash /tmp/_"${HAICAP}".SlackBuild/"${HAILOW}".SlackBuild
+log "${HAINAM}.SlackBuild chroot build complete ..."
+
+# Copy built packages to host /tmp/Hailo-10H_sbopkg dir
+BUILT_PKG_DIR="${TMP}/${HAINAM}-10H_sbopkg_$(date '+%Y%m%d-%H%M%S')"
+mkdir -p "${BUILT_PKG_DIR}"
+cp -avr "${CHRDIR}${TMP}"/*{.md5,.t?z} "${BUILT_PKG_DIR}"
+log "${HAINAM}.SlackBuild built packages copied to ${BUILT_PKG_DIR} ..."
+
+# Copy chroot LOGFILE to host 
+cat "${CHRDIR}${LOGFILE}" > "${LOGFILE}"
+log "Appended LOGFILE in host ${TMP} directory ..."
+
+# Done
+exit 0
+
+# EOF<*>

@@ -1,0 +1,162 @@
+#!/bin/bash
+#
+# SAIRPi Project - Slackware AI on Raspberry Pi
+# https://sairpi.penthux.net
+#
+# Copyright (c) 2026 SAIRPi Project
+#
+# HAILO.SlackBuild
+#
+# kernel_rpi5.SlackBuild
+#
+###
+
+
+# Preconditions
+[ ! -f "../.settings.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : SETTINGS file not found!" && exit 1
+[ ! -f "../.functions.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : FUNCTIONS file not found!" && exit 1
+
+# Load settings
+. "../.settings.inc"
+
+# Load functions
+. "../.functions.inc"
+
+# Variables
+CWD="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+PRGNAM="kernel_${RPIVERS}"
+PROCSS="$(basename "${BASH_SOURCE[0]}")"
+OUTPUT="${TMP}"
+
+# Package dirs
+PKGDIR_KERNEL="${PKGTMP}/${PRGNAM}"
+
+# Substitute and export ARCH
+export SUBARCH="${ARCH:?null_value}"
+
+# Unset ARCH while building kernel
+unset ARCH
+
+# Special bulletin
+set -e
+IFS="$(printf '\n\t')"
+
+# Get Linux source version
+log "Get kernel source version ..."
+getKRNLSRCVERS
+
+# Define Git log format for version output
+cd "${LINUX_SOURCE_DIR}"
+GITVERS=$(git log --format='%h' -n 1)
+log "Linux kernel source Git commit hash: ${GITVERS:?}"
+
+# Clean and create pkg directories
+log "Preparing kernel package directories ..."
+rm -rf "${PKGDIR_KERNEL}" 
+mkdir -p "${PKGDIR_KERNEL}/boot" "${PKGDIR_KERNEL}/install" "${PKGDIR_KERNEL}/usr/doc/${PRGNAM}-${VERSION}/" 
+log "Kernel package directories prepared ..."
+
+# Make RPi defconfig if no .config exists
+if [ ! -f ".config" ]; then
+  make bcm2712_defconfig
+  log "Linux kernel bcm2712_defconfig created ..."
+fi 
+
+# Strip -16k from CONFIG_LOCALVERSION in kernel .config
+sed -Ei "s|-${ARMVERS}-16k|-${ARMVERS}|g" "${LINUX_SOURCE_DIR}/.config"
+sed -Ei 's/^CONFIG_CRYPTO_USER_API_AEAD=.*/# CONFIG_CRYPTO_USER_API_AEAD is not set/' "${LINUX_SOURCE_DIR}/.config"
+
+# Make olddefconfig (if .config already exists)
+if [ -f ".config" ]; then
+  make olddefconfig
+  log "Make olddefconfig ..."
+fi
+
+# Make sync .config and add suffix
+make syncconfig LOCALVERSION="-${SAIRPiSUFFIX}" CONFIG_LOCALVERSION_AUTO=n
+log "Make syncconfig and add ${SAIRPiSUFFIX} suffix ..."
+
+# Make kernel Image.gz
+log "Building kernel Image.gz ..."
+make "${MULTIJOB}" LOCALVERSION="-${SAIRPiSUFFIX}" Image.gz
+
+# Make DTBs
+log "Building DTBs ..."
+make "${MULTIJOB}" dtbs
+
+# Install DTBs [!- NOT required on Raspberry Pi -!]
+# make dtbs_install
+
+# Copy kernel image, System.map and config.gz
+cd "${LINUX_SOURCE_DIR}"
+log "Copying kernel image System.map and config.gz to package boot dir ..."
+cp -a arch/arm64/boot/Image.gz "${PKGDIR_KERNEL}/boot/kernel8.img"
+cp -a System.map "${PKGDIR_KERNEL}/boot/System.map"
+gzip -c .config > "${PKGDIR_KERNEL}/boot/config.gz"
+log "Kernel image, System.map and config.gz copied to package boot dir ..."
+
+# Create cmdline.txt.new with placeholders
+log "Creating cmdline.txt.new ..."
+echo "dwc_otg.lpm_enable=0 console=tty1 root=@DEVROOT@ rootfstype=@ROOTFSTYPE@ rootwait ro" \
+    > "${PKGDIR_KERNEL}/boot/cmdline.txt.new"
+log "cmdline.txt.new created ..."
+
+# Copy build script to pkg usr/doc
+cp -a "${CWD}/${PROCSS}" "${PKGDIR_KERNEL}/usr/doc/${PRGNAM}-${VERSION}/"
+log "${PROCSS} copied to usr/doc ..."
+
+# Create kernel doinst.sh
+log "Creating kernel_${RPIVERS} package doinst.sh ..."
+cp -a "${CWD}/doinst.sh" "${PKGDIR_KERNEL}/install/doinst.sh"
+log "kernel_${RPIVERS} package doinst.sh created ..."
+
+# Create kernel pkg slack-desc file
+# Replace TAGS in slack-desc and copy to pkg dir
+log "Creating kernel_${RPIVERS} package slack-desc ..."
+sed -e "s/@MARQUE@/${MARQUE}/g" \
+    -e "s/@RPIVERS@/${RPIVERS}/g" \
+	-e "s/@VERSION@/${VERSION}/g" \
+    -e "s/@PIVER@/${PIVER}/g" \
+    -e "s|@SAIRPiURL@|${SAIRPiURL}|g" \
+    -e "s/@BUILDREF_ID@/${BUILDREF_ID}/g" \
+	"${CWD}/slack-desc" > "${PKGDIR_KERNEL}/install/slack-desc"
+log "New kernel_${RPIVERS} slack-desc file created ..."
+
+# Add build version file to pkg dir /boot
+log "Creating /boot/version-${PRGNAM}.txt file ..."
+{
+echo "Package: ${PRGNAM}-${VERSION}-${SUBARCH}-${BUILD}_${TAG}.${PKGTYPE:-txz}" 
+echo "Download: ${SAIRPi_GITHUB_REPO_URL}/hailo-10h-slackBuild" 
+echo "Build ref: ${BUILDREF_ID}" 
+echo "Build date: $(date '+%F %T %Z')" 
+echo "Git commit hash: ${GITVERS:?}" 
+} >> "${PKGDIR_KERNEL}/boot/version-"${PRGNAM}".txt"
+
+# Create kernel pkg
+log "Creating ${PRGNAM}-${VERSION}-${SUBARCH}-${BUILD}_${TAG}.txz ..."
+cd "${PKGDIR_KERNEL}"
+/sbin/makepkg -l y -c n "${OUTPUT}/${PRGNAM}-${VERSION}-${SUBARCH}-${BUILD}_${TAG}.txz"
+log "Kernel package created ..."
+cd "${OUTPUT}"
+/bin/md5sum "${PRGNAM}-${VERSION}-${SUBARCH}-${BUILD}_${TAG}.txz" > \
+  "${OUTPUT}/${PRGNAM}-${VERSION}-${SUBARCH}-${BUILD}_${TAG}.md5"
+log "Kernel package checksum created ..."
+
+# Build kernel headers pkg
+cd "${BASE_DIR}/kernel-headers-${RPIVERS}"
+./kernel-headers-${RPIVERS}.SlackBuild
+
+# Build kernel modules pkg
+cd "${BASE_DIR}/kernel-modules-${RPIVERS}"
+./kernel-modules-${RPIVERS}.SlackBuild
+
+# Install kernel pkgs into chroot for HailoRT builds
+log "Install kernel packages into chroot for ${HAINAM}RT builds ..."
+upgradepkg --install-new ${TMP}/kernel*${RPIVERS}-*.txz
+log "Kernel packages installed into chroot ..."
+
+# Done
+log "Linux kernel build and package completed ..."
+exit 0
+
+# EOF<*>

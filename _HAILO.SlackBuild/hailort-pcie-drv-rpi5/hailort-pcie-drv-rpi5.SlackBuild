@@ -1,0 +1,119 @@
+#!/bin/bash
+#
+# SAIRPi Project - Slackware AI on Raspberry Pi
+# https://sairpi.penthux.net
+#
+# Copyright (c) 2026 SAIRPi Project
+#
+# HAILO.SlackBuild
+#
+# hailort-pcie-drv-rpi5.SlackBuild
+#
+###
+
+
+# Preconditions
+[ ! -f "../.settings.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : SETTINGS file not found!" && exit 1
+[ ! -f "../.functions.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : FUNCTIONS file not found!" && exit 1
+
+# Load settings
+. "../.settings.inc"
+
+# Load functions
+. "../.functions.inc"
+
+# Variables
+CWD="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+PRGNAM="hailort-pcie-drv-${RPIVERS}"
+PROCSS="$(basename "${BASH_SOURCE[0]}")"
+
+# Define HailoRT version from source CMakeLists.txt
+log "Getting ${HAINAM}RT source version ..."
+getHAILORT_VERSION
+log "${HAINAM}RT version: ${HAILORT_VERSION} ..."
+
+# Package package directories
+PKGDIR_PCIE="${PKGTMP}/${PRGNAM}"
+OUTPUT="${TMP}"
+
+# Driver directory
+PCIE_DRIVER_DIR="${HAILORT_DRIVERS_DIR}/linux/pcie"
+
+# Get kernel source version (includes SAIRPi suffix)
+log "Getting kernel source version ..."
+getKRNLSRCVERS
+log "Kernel version: ${MODVER} ..."
+
+# Special bulletin
+set -e
+IFS="$(printf '\n\t')"
+
+# Start clean
+log "Creating ${HAINAM}RT PCIe driver package directory ..."
+rm -rf "${PKGDIR_PCIE}" 
+mkdir -p "${PKGDIR_PCIE}"/install "${PKGDIR_PCIE}/usr/doc/${PRGNAM}-${VERSION}/"
+log "${HAINAM}RT PCIe driver package directory created ..."
+
+# Apply patches to HailoRT driver source
+log "Applying ${HAINAM}RT driver source patches ..."
+patch -d "${HAILORT_DRIVERS_DIR}" -p1 --forward --ignore-whitespace \
+  -i "${CWD}/patch/hailort-drivers-del-timer-sync-kernel-6.15.patch" \
+  || log "Patch hailort-drivers-del-timer-sync-kernel-6.15 already applied - skipped ..."
+log "${HAINAM}RT driver source patches applied ..."
+
+# Build HailoRT PCIe driver
+log "Building ${HAINAM} PCIe driver (hailo1x_pci.ko) ..."
+make -C "${PCIE_DRIVER_DIR}" \
+  ARCH=arm64 \
+  kernelver="${MODVER}" \
+  KERNEL_DIR="/lib/modules/${MODVER}/build" \
+  "${MULTIJOB}" all
+log "${HAINAM} PCIe driver build completed ..."
+
+# Install HailoRT PCIe driver into package directory
+log "Installing ${HAINAM} PCIe driver to ${PKGDIR_PCIE} ..."
+make -C "/lib/modules/${MODVER}/build" \
+  M="${PCIE_DRIVER_DIR}" \
+  INSTALL_MOD_PATH="${PKGDIR_PCIE}" \
+  modules_install
+log "${HAINAM} PCIe driver installed ..."
+
+# Copy build script to pkg usr/doc
+cp -a "${CWD}/${PROCSS}" "${PKGDIR_PCIE}/usr/doc/${PRGNAM}-${VERSION}/"
+log "${PROCSS} copied to usr/doc ..."
+
+# Create HailoRT PCIe drv package doinst.sh
+log "Creating kernel-modules-${RPIVERS} package doinst.sh ..."
+sed -e "s/@MODVER@/${MODVER}/g" \
+  "${CWD}/doinst.sh" > "${PKGDIR_PCIE}/install/doinst.sh"
+log "HailoRT PCIe drv package doinst.sh created ..."
+
+# Replace TAGS in slack-desc and copy to pkg dir
+log "Creating HailoRT PCIe drv package slack-desc ..."
+sed -e "s/@MARQUE@/${MARQUE}/g" \
+    -e "s/@RPIVERS@/${RPIVERS}/g" \
+	-e "s/@HAILOW@/${HAILOW}rt/g" \
+	-e "s/@HAINAM@/${HAINAM}/g" \
+    -e "s/@PIVER@/${PIVER}/g" \
+    -e "s|@SAIRPiURL@|${SAIRPiURL}|g" \
+    -e "s/@BUILDREF_ID@/${BUILDREF_ID}/g" \
+	"${CWD}/slack-desc" > "${PKGDIR_PCIE}/install/slack-desc"
+log "New HailoRT PCIe drv package slack-desc created ..."
+
+# Create PCIe driver package
+log "Creating ${PRGNAM}-${HAILORT_VERSION}-${ARCH}-${BUILD}_${TAG}.txz ..."
+cd "${PKGDIR_PCIE}"
+/sbin/makepkg -l y -c n "${OUTPUT}/${PRGNAM}-${HAILORT_VERSION}-${ARCH}-${BUILD}_${TAG}.txz"
+log "${HAINAM} PCIe driver package created ..."
+
+# Create PCIe driver package checksum
+log "Creating ${PRGNAM}-${HAILORT_VERSION}-${ARCH}-${BUILD}_${TAG}.md5 ..."
+cd "${OUTPUT}"
+/bin/md5sum "${PRGNAM}-${HAILORT_VERSION}-${ARCH}-${BUILD}_${TAG}.txz" > \
+  "${OUTPUT}/${PRGNAM}-${HAILORT_VERSION}-${ARCH}-${BUILD}_${TAG}.md5"
+log "${HAINAM} PCIe driver package checksum created ..."
+
+# Done
+exit 0
+
+# EOF<*>

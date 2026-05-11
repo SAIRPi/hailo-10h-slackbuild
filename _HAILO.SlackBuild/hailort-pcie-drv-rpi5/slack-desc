@@ -1,0 +1,20 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description.  Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in.  You must
+# make exactly 11 lines for the formatting to be correct.  It's also
+# customary to leave one space after the ':' except on otherwise blank lines.
+
+                     |-----handy-ruler----------------------------------------|
+@HAILOW@-pcie-drv-@RPIVERS@: @HAILOW@-pcie-drv-@RPIVERS@ (PCIe kernel driver)
+@HAILOW@-pcie-drv-@RPIVERS@:
+@HAILOW@-pcie-drv-@RPIVERS@: PCIe kernel driver for @HAINAM@-10H M.2 AI Accelerator
+@HAILOW@-pcie-drv-@RPIVERS@: Module on the Raspberry Pi @PIVER@. This driver enables
+@HAILOW@-pcie-drv-@RPIVERS@: communication between the host system and the @HAINAM@
+@HAILOW@-pcie-drv-@RPIVERS@: AI hardware over the Pi @PIVER@'s PCIe interface.
+@HAILOW@-pcie-drv-@RPIVERS@:
+@HAILOW@-pcie-drv-@RPIVERS@: See: https://hailo.ai/products/ai-accelerators/
+@HAILOW@-pcie-drv-@RPIVERS@:
+@HAILOW@-pcie-drv-@RPIVERS@:
+@HAILOW@-pcie-drv-@RPIVERS@: @MARQUE@ Project - @SAIRPiURL@
+@HAILOW@-pcie-drv-@RPIVERS@: Build Ref: @BUILDREF_ID@

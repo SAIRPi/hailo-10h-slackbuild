@@ -1,0 +1,116 @@
+#!/bin/bash
+#
+# SAIRPi Project - Slackware AI on Raspberry Pi
+# https://sairpi.penthux.net
+#
+# HAILO.SlackBuild chroot build [stage 2]
+#
+# Slackware AArch64 Linux build process for HailoRT software on the 
+# Hailo-10H AI Accelerator Module installed on a Raspberry Pi 5.
+#
+# hailo.SlackBuild 
+# 2026-04-22 - v0.0.1 - Progenitor
+# 2026-05-11 - v1.0.5 - Updated for public release
+#
+###
+#
+# MIT License
+# 
+# Copyright (c) 2026 SAIRPi Project
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a 
+# copy of this software and associated documentation files (the "Software"), 
+# to deal in the Software without restriction, including without limitation 
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the 
+# Software is furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in 
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
+# IN THE SOFTWARE.
+#
+###
+
+
+# Preconditions
+CWD="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+[ ! -f "${CWD}/.settings.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : SETTINGS file not found!" && exit 1
+[ ! -f "${CWD}/.functions.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : FUNCTIONS file not found!" && exit 1
+[ -f /etc/profile.d/cmake-legacy.sh ] && . /etc/profile.d/cmake-legacy.sh
+
+# Load settings
+. "${CWD}/.settings.inc"
+
+# Load functions
+. "${CWD}/.functions.inc"
+
+# Exports
+export BUILDREF_ID
+export LOGFILE
+export RELVER
+export TAG
+
+# Special bulletin
+set -e
+IFS="$(printf '\n\t')"
+
+# Start logging
+log "Stage 2: ${HAICAP}.SlackBuild ..."
+
+# Set legacy cmake in PATH
+export PATH="${CMAKE_LEGACY_INSTALL_DIR}/bin:${PATH}"
+log "Legacy cmake PATH set: ${CMAKE_LEGACY_INSTALL_DIR}/bin ..."
+
+# Start clean
+rm -rf "${PKGTMP}"/{*hailo*,*"${RPIVERS}"*}
+mkdir -p "${PKGTMP}"
+log "Created ${PKGTMP} directory ..."
+
+# Get Linux source version
+getKRNLSRCVERS
+
+# Build legacy cmake
+log "Run build-legacy-cmake-source.sh ..."
+"${CWD}/build-legacy-cmake-source.sh"
+log "Legacy $(cmake --version | head -1) build completed ..."
+
+
+# HAILO.SlackBuild list [in-order]
+for SBPROC in \
+    kernel_${RPIVERS} \
+	${RPIVERS}-boot-firmware \
+	hailort_${RPIVERS} \
+	${HAILOW}rt-pcie-drv-${RPIVERS} \
+	${HAILOW}rt-nnc-drv-${RPIVERS} \
+	${HAILOW}rt-10h-firmware \
+	; do
+
+# Build-list output aesthetics
+    SBSTATUS="Building"
+    log ""
+    log "############################################"
+    log "## ${HAICAP}.SlackBuild Rev: ${RELVER} "
+    log "## Target OS: Slackware ${TARGETARCH} ${SLACKVERS} "
+    log "## ${HAICAP} kernel ${MODVER} "
+	log "## Build Ref ${BUILDREF_ID} "
+    log "## ${SBSTATUS}: ${SBPROC} "
+    log "############################################"
+    log ""  
+    
+# Roll the SARPi64 Build Engine
+    cd "${CWD}"/"${SBPROC}" 
+    ./"${SBPROC}".SlackBuild
+done
+
+# Done
+log "${HAILOW}.SlackBuild process completed ..."
+exit 0
+
+# EOF<*>
