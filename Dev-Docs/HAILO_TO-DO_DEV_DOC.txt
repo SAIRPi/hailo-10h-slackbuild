@@ -1,0 +1,43 @@
+###############################################################################
+# SAIRPi Project - Slackware AI on Raspberry Pi
+# https://sairpi.penthux.net
+#
+# HAILO BUILD TO-DO DOCUMENTATION
+#
+# Platform : Raspberry Pi 5 (AArch64 / armv8)
+# OS       : Slackware AArch64 -current
+# Hardware : Hailo-10H M.2 AI Accelerator Module
+# Linux    : kernel 6.18.26
+# HailoRT  : v5.3.0
+#
+# This document records outstanding tasks, issues and items requiring
+# attention during the SAIRPi/HAILO build development process.
+#
+# Maintainer: sairpi.project@penthux.net
+# Updated   : 2026-05-06
+###############################################################################
+
+
+# TODO 001 - CHROOT DUPLICATE kernel-modules-rpi5 PACKAGE ENTRIES
+
+Status  : OUTSTANDING
+Priority: MEDIUM
+
+Description:
+  The chroot at /tmp/sairpi-chroot has duplicate kernel-modules-rpi5 package
+  entries in /tmp/sairpi-chroot/var/log/packages/:
+    kernel-modules-rpi5-6.18.26-armv8-1_slackcurrent_02May26_sai
+    kernel-modules-rpi5-6.18.26-armv8-1_slackcurrent_05May26_sai
+
+  These are a result of unauthorised package installations made in a previous
+  session. The chroot state is inconsistent and needs to be cleaned up before
+  the next clean build cycle.
+
+Action required:
+  Remove the duplicate 02May26 entry from /tmp/sairpi-chroot/var/log/packages/
+  and verify the chroot package state is consistent before next build.
+
+------
+
+
+# EOF<*>

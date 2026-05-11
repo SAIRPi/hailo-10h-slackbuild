@@ -312,7 +312,7 @@ Description:
 
     hailo1x 0001:06:00.0: Failed to enable MSI -28
 
-  Error -28 is -ENOSPC — the kernel could not allocate an MSI vector. The
+  Error -28 is -ENOSPC - the kernel could not allocate an MSI vector. The
   Hailo-10H sits behind an ASMedia ASM2806 4-port PCIe switch connected to
   the BCM2712 PCIe bridge on the Raspberry Pi 5. MSI vector allocation
   through the ASMedia switch fails without explicit device tree configuration.

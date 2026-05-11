@@ -125,7 +125,7 @@ Notes:
   The Hailo-10H runs its own internal Linux system (hostname: hailo10, kernel:
   5.15.32 Yocto, aarch64). The runtime log is from that internal system, not
   the Raspberry Pi host. The getty /dev/ttyS1 errors are from the device's own
-  inittab and can be ignored — they are not related to the host or this build.
+  inittab and can be ignored - they are not related to the host or this build.
 
 ------
 
@@ -141,7 +141,7 @@ The Hailo-10H runtime log contains repeating errors:
   authpriv.err getty[564]: /dev/ttyS1: not a tty
 
 The Hailo-10H runs an internal Yocto-based Linux system. Its inittab has an
-entry spawning getty on /dev/ttyS1 — a serial console intended for hardware
+entry spawning getty on /dev/ttyS1 - a serial console intended for hardware
 debug use. When the device is deployed via PCIe with no physical serial
 connection, the TTY does not exist. Getty fails, init attempts to respawn it,
 fails again, and eventually disables it.
@@ -184,7 +184,7 @@ Result  : PASS
 Notes:
   SCU-FW v1.10.0 confirmed. DDR 8 GiB initialised successfully. AP (Linux)
   booted successfully. The PCIe power state transition failure is expected
-  behaviour — PCIe clocks remain active while the host is communicating with
+  behaviour - PCIe clocks remain active while the host is communicating with
   the device.
 
 ------
@@ -198,7 +198,7 @@ Result  : PASS (with note)
   Output is binary data, not human-readable text.
 
 Notes:
-  The nnc log type returns raw binary output. This is expected — the NNC
+  The nnc log type returns raw binary output. This is expected - the NNC
   (Neural Network Core) log data is not intended for direct terminal display.
 
 ------
@@ -244,7 +244,7 @@ Status      : Reported to Hailo
 
 The file hailo10h_fw.tar.gz is present in /lib/firmware/hailo/hailo10h/
 alongside the extracted firmware files. Investigation shows this tarball is
-contained within itself — the outer hailo10h_fw.tar.gz extracts to include
+contained within itself - the outer hailo10h_fw.tar.gz extracts to include
 a copy of hailo10h_fw.tar.gz as one of its contents.
 
 The firmware loads correctly and the device operates normally. The nested

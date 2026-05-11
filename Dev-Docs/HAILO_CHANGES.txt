@@ -1,0 +1,121 @@
+###############################################################################
+# SAIRPi Project - Slackware AI on Raspberry Pi
+# https://sairpi.penthux.net
+#
+# HAILO BUILD CHANGES LOG
+#
+# Platform : Raspberry Pi 5 (AArch64 / armv8)
+# OS       : Slackware AArch64 -current
+# Hardware : Hailo-10H M.2 AI Accelerator Module
+#
+# Maintainer: sairpi.project@penthux.net
+# Updated   : 2026-05-06
+###############################################################################
+
+
+# CHANGE 001 - BUILD SCRIPT RESTRUCTURE
+
+Date   : 2026-05-06
+Status : COMPLETE
+
+Description:
+  Restructured _HAILO.SlackBuild from flat monolithic build-*.sh scripts to a
+  per-package directory layout. Each package now has its own directory containing
+  its .SlackBuild script, slack-desc template and doinst.sh where applicable.
+
+  hailo.SlackBuild is now an iterator only. It loops over the package directories
+  in build order and calls each package's .SlackBuild script. All build logic
+  lives in the per-package scripts. build-legacy-cmake-source.sh remains at the
+  top level as it is not a package.
+
+  kernel_rpi5.SlackBuild handles the full kernel compile and calls
+  kernel-modules-rpi5.SlackBuild and kernel-headers-rpi5.SlackBuild for
+  packaging. The installpkg for kernel-modules (required before driver builds
+  can reference /lib/modules/${MODVER}/build) is now in
+  kernel-modules-rpi5.SlackBuild.
+
+  Variable expansion in install templates:
+    - slack-desc files: envsubst at build time (build-time vars only)
+    - doinst.sh files with runtime vars (${MODVER}, ${SUBARCH}): envsubst at build time
+    - doinst.sh files with install-time vars: copied static (quoted heredoc)
+
+  Patches for hailort and hailort-drivers remain in kernel_rpi5/patch/ and are
+  referenced by path from hailort-rpi5.SlackBuild and the driver scripts.
+
+Build order (hailo.SlackBuild loop):
+  1. kernel_rpi5          -> kernel-rpi5, kernel-modules-rpi5, kernel-headers-rpi5
+  2. rpi5-boot-firmware   -> rpi5-boot-firmware
+  3. hailort-rpi5         -> hailort-rpi5
+  4. hailort-pcie-drv-rpi5 -> hailort-pcie-drv-rpi5
+  5. hailort-nnc-drv-rpi5  -> hailort-nnc-drv-rpi5
+  6. hailo-10h-firmware   -> hailo-10h-firmware
+
+New directory structure (_HAILO.SlackBuild/):
+  hailo.SlackBuild
+  .settings.inc
+  .functions.inc
+  build-legacy-cmake-source.sh
+  kernel_rpi5/
+    kernel_rpi5.SlackBuild
+    slack-desc
+    doinst.sh
+    patch/
+      hailort-protobuf-cmake-aarch64-lib64.patch
+      hailort-drivers-del-timer-sync-kernel-6.15.patch
+      patch_desc.log
+  kernel-modules-rpi5/
+    kernel-modules-rpi5.SlackBuild
+    slack-desc
+    doinst.sh
+  kernel-headers-rpi5/
+    kernel-headers-rpi5.SlackBuild
+    slack-desc
+    doinst.sh
+  rpi5-boot-firmware/
+    rpi5-boot-firmware.SlackBuild
+    slack-desc
+    doinst.sh
+    config.txt.new
+  hailort-rpi5/
+    hailort-rpi5.SlackBuild
+    slack-desc
+  hailort-pcie-drv-rpi5/
+    hailort-pcie-drv-rpi5.SlackBuild
+    slack-desc
+    doinst.sh
+  hailort-nnc-drv-rpi5/
+    hailort-nnc-drv-rpi5.SlackBuild
+    slack-desc
+    doinst.sh
+  hailo-10h-firmware/
+    hailo-10h-firmware.SlackBuild
+    slack-desc
+
+
+# CHANGE 002 - SAIRPi.SlackBuild DOWNLOAD FUNCTIONS INLINED
+
+Date   : 2026-05-06
+Status : COMPLETE
+
+Description:
+  Removed separate get-*.sh download scripts from _SAIRPi.SlackBuild.
+  Download functionality moved into .functions.inc as named functions:
+    getLINUX_SOURCE
+    getBOOT_FIRMWARE
+    getHAILORT_SOURCE
+    getHAILORT_DRIVERS
+    get_board_support_packages
+
+  SAIRPi.SlackBuild now calls these functions directly. chroot-get-syspkg.sh
+  removed; its logic absorbed into get_board_support_packages() in .functions.inc.
+  chroot-pkg-forge.sh remains as a separate script.
+
+Scripts removed:
+  get-linux-kernel-source.sh
+  get-boot-firmware-rpi.sh
+  get-hailort-source.sh
+  get-hailort-drivers-source.sh
+  chroot-get-syspkg.sh
+
+
+# EOF<*>
