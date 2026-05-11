@@ -27,9 +27,10 @@ It involves a two-stage build process:
 
 You must have git installed on your Slackware AArch64 Linux system with Internet access in order to clone this repository.
 
-To download this **hailo-10h-slackbuild** repository, use `git clone`:
+To download this **hailo-10h-slackbuild** repository, use `git clone`. For example:
 
 ```bash
+  cd /tmp
   git clone https://github.com/SAIRPi/hailo-10h-slackbuild _hailo-10h.SlackBuild
 ```
 The build process must be run as **root** user from within the download directory. For example:
