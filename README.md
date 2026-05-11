@@ -64,7 +64,7 @@ It's possible to edit the user section at the top of `.settings.inc` before buil
 | `SLACKVERS` | `current` | Slackware AArch64 version |
 | `RPI_KERNEL_BRANCH` | `rpi-6.18.y` | Raspberry Pi Linux kernel Git branch |
 | `RPI_BOOTFW_BRANCH` | `next` | Raspberry Pi boot firmware Git branch |
-| `HAILORT_DRIVERS_BRANCH` | `master` | Hailo drivers Git branch |
+| `HAILORT_DRIVERS_BRANCH` | `master` | HailoRT and drivers Git branch |
 | `BUILD` | `1` | Package build number |
 | `LOCALSERVER` | `192.168.10.70` | Local Slackware mirror server IP |
 
