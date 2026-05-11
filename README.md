@@ -32,11 +32,17 @@ To download this **hailo-10h-slackbuild** repository, use `git clone`. For examp
 ```bash
   cd /tmp
   git clone https://github.com/SAIRPi/hailo-10h-slackbuild _hailo-10h.SlackBuild
-```
-The build process must be run as **root** user from within the download directory. For example:
+```  
+Make all .SlackBuild and .sh files executable:
 
 ```bash
   cd _hailo-10h.SlackBuild
+  find . \( -name "*.SlackBuild" -o -name "*.sh" \) -exec chmod +x {} +
+```  
+
+Run the build process as **root** user from within the download directory:
+
+```bash
   ./hailo-10h.SlackBuild
 ```
 
