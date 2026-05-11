@@ -1,8 +1,8 @@
-# hailo-10h.SlackBuild
+# Hailo-10H SlackBuild
 
 **SAIRPi Project** - Slackware AI on Raspberry Pi - https://sairpi.penthux.net
 
-Bash script build process that produces a Slackware AArch64 package set with full support for the Hailo-10H M.2 AI Accelerator Module on a Raspberry Pi 5. 
+Bash script build process that creates Slackware AArch64 packages with full support for the Hailo-10H M.2 AI Accelerator Module on a Raspberry Pi 5. 
 
 ---
 
@@ -118,6 +118,67 @@ Where <tag> = slack<slackware_environment>_<release_date>_sai
 Each package has a corresponding `.md5` checksum file. On completion, all built packages are copied to `/tmp/Hailo-10H_sbopkg_YYYYMMDD-HHMMSS/` directory on the host system.
 
 ---
+
+## Directory Tree
+
+root@maia:/tmp/_hailo-10h.SlackBuild# tree
+.
+├── BuildLogs
+├── Dev-Docs
+│   ├── HAILO_AFTERBUILD_TEST.txt
+│   ├── HAILO_BUILD_CHANGES.txt
+│   ├── HAILO_BUILD_DEV_DOC.txt
+│   ├── HAILO_TODO_DEV_DOC.txt
+│   └── SAIRPi_JAFFAWORKS_R&D_DOC.txt
+├── LICENSE
+├── README.md
+├── _HAILO.SlackBuild
+│   ├── LICENSE
+│   ├── build-legacy-cmake-source.sh
+│   ├── hailo.SlackBuild
+│   ├── hailort-10h-firmware
+│   │   ├── doinst.sh
+│   │   ├── hailort-10h-firmware.SlackBuild
+│   │   └── slack-desc
+│   ├── hailort-nnc-drv-rpi5
+│   │   ├── doinst.sh
+│   │   ├── hailort-nnc-drv-rpi5.SlackBuild
+│   │   ├── patch
+│   │   │   └── hailort-drivers-del-timer-sync-kernel-6.15.patch
+│   │   └── slack-desc
+│   ├── hailort-pcie-drv-rpi5
+│   │   ├── doinst.sh
+│   │   ├── hailort-pcie-drv-rpi5.SlackBuild
+│   │   ├── patch
+│   │   │   └── hailort-drivers-del-timer-sync-kernel-6.15.patch
+│   │   └── slack-desc
+│   ├── hailort_rpi5
+│   │   ├── doinst.sh
+│   │   ├── hailort_rpi5.SlackBuild
+│   │   ├── patch
+│   │   │   └── hailort-protobuf-cmake-aarch64-lib64.patch
+│   │   └── slack-desc
+│   ├── kernel-headers-rpi5
+│   │   ├── doinst.sh
+│   │   ├── kernel-headers-rpi5.SlackBuild
+│   │   └── slack-desc
+│   ├── kernel-modules-rpi5
+│   │   ├── doinst.sh
+│   │   ├── kernel-modules-rpi5.SlackBuild
+│   │   └── slack-desc
+│   ├── kernel_rpi5
+│   │   ├── doinst.sh
+│   │   ├── kernel_rpi5.SlackBuild
+│   │   └── slack-desc
+│   └── rpi5-boot-firmware
+│       ├── config.txt.new
+│       ├── doinst.sh
+│       ├── rpi5-boot-firmware.SlackBuild
+│       └── slack-desc
+├── chroot-pkg-forge.sh
+└── hailo-10h.SlackBuild
+
+------
 
 ## Build Notes
 
