@@ -122,66 +122,65 @@ Each package has a corresponding `.md5` checksum file. On completion, all built 
 
 ## Directory Tree
 ```bash
-user@slackware:/tmp/_hailo-10h.SlackBuild# tree -a
+user@slackware:/tmp/_hailo-10h.SlackBuild# tree -ah
 .
-├── .build-date
-├── .functions.inc
-├── .settings.inc
-├── BuildLogs
-├── Dev-Docs
-│   ├── HAILO_AFTERBUILD_TEST.txt
-│   ├── HAILO_BUILD_CHANGES.txt
-│   ├── HAILO_BUILD_DEV_DOC.txt
-│   ├── HAILO_TODO_DEV_DOC.txt
-│   └── SAIRPi_JAFFAWORKS_R&D_DOC.txt
-├── LICENSE
-├── README.md
-├── _HAILO.SlackBuild
-│   ├── .functions.inc
-│   ├── .settings.inc
-│   ├── build-legacy-cmake-source.sh
-│   ├── hailo.SlackBuild
-│   ├── hailort-10h-firmware
-│   │   ├── doinst.sh
-│   │   ├── hailort-10h-firmware.SlackBuild
-│   │   └── slack-desc
-│   ├── hailort-nnc-drv-rpi5
-│   │   ├── doinst.sh
-│   │   ├── hailort-nnc-drv-rpi5.SlackBuild
-│   │   ├── patch
-│   │   │   └── hailort-drivers-del-timer-sync-kernel-6.15.patch
-│   │   └── slack-desc
-│   ├── hailort-pcie-drv-rpi5
-│   │   ├── doinst.sh
-│   │   ├── hailort-pcie-drv-rpi5.SlackBuild
-│   │   ├── patch
-│   │   │   └── hailort-drivers-del-timer-sync-kernel-6.15.patch
-│   │   └── slack-desc
-│   ├── hailort_rpi5
-│   │   ├── doinst.sh
-│   │   ├── hailort_rpi5.SlackBuild
-│   │   ├── patch
-│   │   │   └── hailort-protobuf-cmake-aarch64-lib64.patch
-│   │   └── slack-desc
-│   ├── kernel-headers-rpi5
-│   │   ├── doinst.sh
-│   │   ├── kernel-headers-rpi5.SlackBuild
-│   │   └── slack-desc
-│   ├── kernel-modules-rpi5
-│   │   ├── doinst.sh
-│   │   ├── kernel-modules-rpi5.SlackBuild
-│   │   └── slack-desc
-│   ├── kernel_rpi5
-│   │   ├── doinst.sh
-│   │   ├── kernel_rpi5.SlackBuild
-│   │   └── slack-desc
-│   └── rpi5-boot-firmware
-│       ├── config.txt.new
-│       ├── doinst.sh
-│       ├── rpi5-boot-firmware.SlackBuild
-│       └── slack-desc
-├── chroot-pkg-forge.sh
-└── hailo-10h.SlackBuild
+├── [4.4K]  .functions.inc
+├── [3.8K]  .settings.inc
+├── [4.0K]  BuildLogs
+├── [4.0K]  Dev-Docs
+│   ├── [9.5K]  HAILO_AFTERBUILD_TEST.txt
+│   ├── [3.8K]  HAILO_BUILD_CHANGES.txt
+│   ├── [ 18K]  HAILO_BUILD_DEV_DOC.txt
+│   ├── [3.1K]  HAILO_TODO_DEV_DOC.txt
+│   └── [3.9K]  SAIRPi_JAFFAWORKS_R&D_DOC.txt
+├── [1.0K]  LICENSE
+├── [8.7K]  README.md
+├── [4.0K]  _HAILO.SlackBuild
+│   ├── [4.6K]  .functions.inc
+│   ├── [4.4K]  .settings.inc
+│   ├── [2.4K]  build-legacy-cmake-source.sh
+│   ├── [3.4K]  hailo.SlackBuild
+│   ├── [4.0K]  hailort-10h-firmware
+│   │   ├── [ 613]  doinst.sh
+│   │   ├── [3.6K]  hailort-10h-firmware.SlackBuild
+│   │   └── [1.1K]  slack-desc
+│   ├── [4.0K]  hailort-nnc-drv-rpi5
+│   │   ├── [  20]  doinst.sh
+│   │   ├── [3.8K]  hailort-nnc-drv-rpi5.SlackBuild
+│   │   ├── [4.0K]  patch
+│   │   │   └── [ 223]  hailort-drivers-del-timer-sync-kernel-6.15.patch
+│   │   └── [1.0K]  slack-desc
+│   ├── [4.0K]  hailort-pcie-drv-rpi5
+│   │   ├── [  19]  doinst.sh
+│   │   ├── [3.7K]  hailort-pcie-drv-rpi5.SlackBuild
+│   │   ├── [4.0K]  patch
+│   │   │   └── [ 223]  hailort-drivers-del-timer-sync-kernel-6.15.patch
+│   │   └── [1.2K]  slack-desc
+│   ├── [4.0K]  hailort_rpi5
+│   │   ├── [ 623]  doinst.sh
+│   │   ├── [4.0K]  hailort_rpi5.SlackBuild
+│   │   ├── [4.0K]  patch
+│   │   │   └── [ 556]  hailort-protobuf-cmake-aarch64-lib64.patch
+│   │   └── [1.1K]  slack-desc
+│   ├── [4.0K]  kernel-headers-rpi5
+│   │   ├── [  73]  doinst.sh
+│   │   ├── [2.7K]  kernel-headers-rpi5.SlackBuild
+│   │   └── [1.1K]  slack-desc
+│   ├── [4.0K]  kernel-modules-rpi5
+│   │   ├── [  19]  doinst.sh
+│   │   ├── [3.3K]  kernel-modules-rpi5.SlackBuild
+│   │   └── [1.1K]  slack-desc
+│   ├── [4.0K]  kernel_rpi5
+│   │   ├── [1011]  doinst.sh
+│   │   ├── [5.0K]  kernel_rpi5.SlackBuild
+│   │   └── [1014]  slack-desc
+│   └── [4.0K]  rpi5-boot-firmware
+│       ├── [2.7K]  config.txt.new
+│       ├── [ 715]  doinst.sh
+│       ├── [4.3K]  rpi5-boot-firmware.SlackBuild
+│       └── [1.1K]  slack-desc
+├── [5.2K]  chroot-pkg-forge.sh
+└── [6.4K]  hailo-10h.SlackBuild
 ```
 ------
 
