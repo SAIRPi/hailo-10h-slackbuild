@@ -1,7 +1,6 @@
 # hailo-10h.SlackBuild
 
-**SAIRPi Project** - Slackware AI on Raspberry Pi  
-https://sairpi.penthux.net
+**SAIRPi Project** - Slackware AI on Raspberry Pi - https://sairpi.penthux.net
 
 Bash script build process that produces a Slackware AArch64 package set with full support for the Hailo-10H M.2 AI Accelerator Module on a Raspberry Pi 5. 
 
@@ -9,13 +8,15 @@ Bash script build process that produces a Slackware AArch64 package set with ful
 
 ## Build overview
 
-This is the first known build of HailoRT for Slackware AArch64 Linux.
+This is the first known successful build of HailoRT for Slackware AArch64 Linux. 
+
+Once each run of the build process is executed it requires an initial input selection of `clean start` or `use existing data` and is fully automated thereafter.
 
 It involves a two-stage build process:
 
 **Stage 1** runs on the Raspberry Pi 5 host. Downloads all source (Raspberry Pi Linux kernel, boot firmware, HailoRT, HailoRT drivers), downloads and installs Slackware AArch64 packages into a chroot directory:  `/tmp/hailo-chroot`, then invokes Stage 2.
 
-**Stage 2** runs inside the chroot. Builds cmake 3.31.12 from source (required — HailoRT is incompatible with cmake 4.x), builds the Raspberry Pi Linux kernel, HailoRT runtime, PCIe and NNC drivers, packages the boot firmware, and downloads the Hailo-10H device firmware from Hailo's AWS S3.
+**Stage 2** runs inside the chroot. Builds cmake 3.31.12 from source (required - HailoRT is incompatible with cmake 4.x), builds the Raspberry Pi Linux kernel, HailoRT runtime, PCIe and NNC drivers, packages the boot firmware, and downloads the Hailo-10H device firmware from Hailo's AWS S3.
 
 - Included in stage 1 and 2 are .settings.inc files which contain settings that can be modified by the user. See: **Configuration** in this README.
 - Both Hailo 10H SlackBuild stages use a `/tmp/SBo` directory on the host system and in the chroot (where applicable) for storing files and source data. 
@@ -68,9 +69,8 @@ It's possible to edit the user section at the top of `.settings.inc` before buil
 
 - `LOCALSERVER` setting is for when there's a local network Slackware mirror repository available. It's not absolutely necessary in order to use these build scripts, but it's easier and much more convenient because you're not relying on Internet speeds or sharing bandwidth with other users.
 
-```
-Note the `EDIT ANYTHING BELOW THIS LINE AT YOUR OWN RISK` comment in the `.settings.inc` file(s). You can, of course, make whatever changes suit your requirements to any of the build scripts or support files from this repository. 
-```
+Note the `EDIT ANYTHING BELOW THIS LINE AT YOUR OWN RISK` comment in the `.settings.inc` file(s). You can, of course, make whatever modifications suit your requirements to any of the build scripts or support files from this repository. 
+
 ---
 
 ## Operating System
@@ -121,9 +121,9 @@ Each package has a corresponding `.md5` checksum file. On completion, all built 
 
 ## Build Notes
 
-- cmake 3.31.12 is built from source during Stage 2. Slackware AArch64 ships cmake 4.x which is incompatible with HailoRT. The legacy cmake installs to `/usr/local/cmake-3.31/` alongside the system cmake — it does not replace it.
+- cmake 3.31.12 is built from source during Stage 2. Slackware AArch64 ships cmake 4.x which is incompatible with HailoRT. The legacy cmake installs to `/usr/local/cmake-3.31/` alongside the system cmake - it does not replace it.
 - Patches are applied automatically to the HailoRT source: one fixes the protobuf `lib64` cmake path on AArch64, the other replaces `del_timer_sync()` with `timer_delete_sync()` for Linux 6.15+.
-- The `config.txt.new` produced by the boot firmware package includes `dtparam=nvme` and `dtoverlay=pciex1-compat-pi5,no-mip` under `[pi5]` — both required for MSI to work through the PCIe switch on the Raspberry Pi 5.
+- The `config.txt.new` produced by the boot firmware package includes `dtparam=nvme` and `dtoverlay=pciex1-compat-pi5,no-mip` under `[pi5]` - both required for MSI to work through the PCIe switch on the Raspberry Pi 5.
 
 **NB:** MSI (Message Signalled Interrupts) is the interrupt mechanism the Hailo PCIe driver uses. Without those two dtoverlay lines in `config.txt` the driver fails to allocate an MSI vector and the device will not be detected.
 
