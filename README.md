@@ -19,8 +19,6 @@ It involves a two-stage build process:
 
 - Both Hailo 10H SlackBuild stages use a `/tmp/SBo` directory on the host system and in the chroot (where applicable) for storing files and source data. 
 
-- The build scripts will create a chroot directory, mount it, and unmount it automatically once the process has completed or exited with [`CTRL+C`]
-
 ---
 
 ## Usage
@@ -49,6 +47,7 @@ You will be prompted:
 
 - For an initial build (i.e. the first time it's run) [`Y`] should be selected. 
 - Once the source(s) have been compiled, on subsequent build runs [`K`] can be selected.
+- The build process will create a chroot directory, mount it, and unmount it automatically once the process has completed. Or if/when it's exited with [`CTRL+C`].
 
 ---
 
