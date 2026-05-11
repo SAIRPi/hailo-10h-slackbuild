@@ -66,7 +66,7 @@ It's possible to edit the user section at the top of `.settings.inc` before buil
 | `RPI_BOOTFW_BRANCH` | `next` | Raspberry Pi boot firmware Git branch |
 | `HAILORT_DRIVERS_BRANCH` | `master` | Hailo drivers Git branch |
 | `BUILD` | `1` | Package build number |
-| `LOCALSERVER` | `192.168.10.70` | Local Slackware mirror IP |
+| `LOCALSERVER` | `192.168.10.70` | Local Slackware mirror server IP |
 
 - `LOCALSERVER` setting is for when there's a local network Slackware mirror repository available. It's not absolutely necessary in order to use these build scripts, but it's easier and much more convenient because you're not relying on Internet speeds or sharing bandwidth with other users.
 
