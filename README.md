@@ -13,10 +13,11 @@ This is the first known build of HailoRT for Slackware AArch64 Linux.
 
 It involves a two-stage build process:
 
-**Stage 1** runs on the Raspberry Pi 5 host. Downloads all source (Raspberry Pi Linux kernel, boot firmware, HailoRT, HailoRT drivers), downloads and installs Slackware AArch64 packages into a chroot at `/tmp/hailo-chroot`, then invokes Stage 2.
+**Stage 1** runs on the Raspberry Pi 5 host. Downloads all source (Raspberry Pi Linux kernel, boot firmware, HailoRT, HailoRT drivers), downloads and installs Slackware AArch64 packages into a chroot directory:  `/tmp/hailo-chroot`, then invokes Stage 2.
 
 **Stage 2** runs inside the chroot. Builds cmake 3.31.12 from source (required — HailoRT is incompatible with cmake 4.x), builds the Raspberry Pi Linux kernel, HailoRT runtime, PCIe and NNC drivers, packages the boot firmware, and downloads the Hailo-10H device firmware from Hailo's AWS S3.
 
+- Included in stage 1 and 2 are .settings.inc files which contain settings that can be modified by the user. See: **Configuration** in this README.
 - Both Hailo 10H SlackBuild stages use a `/tmp/SBo` directory on the host system and in the chroot (where applicable) for storing files and source data. 
 
 ---
@@ -49,6 +50,27 @@ You will be prompted:
 - Once the source(s) have been compiled, on subsequent build runs [`K`] can be selected.
 - The build process will create a chroot directory, mount it, and unmount it automatically once the process has completed. Or if/when it's exited with [`CTRL+C`].
 
+---
+
+## Configuration
+
+It's possible to edit the user section at the top of `.settings.inc` before building:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `RPIVERS` | `rpi5` | Target Raspberry Pi version |
+| `SLACKVERS` | `current` | Slackware AArch64 version |
+| `RPI_KERNEL_BRANCH` | `rpi-6.18.y` | Raspberry Pi Linux kernel Git branch |
+| `RPI_BOOTFW_BRANCH` | `next` | Raspberry Pi boot firmware Git branch |
+| `HAILORT_DRIVERS_BRANCH` | `master` | Hailo drivers Git branch |
+| `BUILD` | `1` | Package build number |
+| `LOCALSERVER` | `192.168.10.70` | Local Slackware mirror IP |
+
+- `LOCALSERVER` setting is for when there's a local network Slackware mirror repository available. It's not absolutely necessary in order to use these build scripts, but it's easier and much more convenient because you're not relying on Internet speeds or sharing bandwidth with other users.
+
+```
+Note the `EDIT ANYTHING BELOW THIS LINE AT YOUR OWN RISK` comment in the `.settings.inc` file(s). You can, of course, make whatever changes suit your requirements to any of the build scripts or support files from this repository. 
+```
 ---
 
 ## Operating System
@@ -94,26 +116,6 @@ Where <tag> = slack<slackware_environment>_<release_date>_sai
 * sai = SAIRPi Project ID tag (3 characters) for Slackware packages created by the project
 
 Each package has a corresponding `.md5` checksum file. On completion, all built packages are copied to `/tmp/Hailo-10H_sbopkg_YYYYMMDD-HHMMSS/` directory on the host system.
-
----
-
-## Configuration
-
-Edit the user section at the top of `.settings.inc` before building:
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `RPIVERS` | `rpi5` | Target Raspberry Pi version |
-| `SLACKVERS` | `current` | Slackware AArch64 version |
-| `RPI_KERNEL_BRANCH` | `rpi-6.18.y` | Raspberry Pi Linux kernel Git branch |
-| `RPI_BOOTFW_BRANCH` | `next` | Raspberry Pi boot firmware Git branch |
-| `HAILORT_DRIVERS_BRANCH` | `master` | Hailo drivers Git branch |
-| `BUILD` | `1` | Package build number |
-| `LOCALSERVER` | `192.168.10.70` | Local Slackware mirror IP |
-
-- `LOCALSERVER` setting is for when there's a local network Slackware mirror repository available. It's not absolutely necessary in order to use these build scripts, but it's easier and much more convenient because you're not relying on Internet speeds or sharing bandwidth with other users.
-
-Note the `EDIT ANYTHING BELOW THIS LINE AT YOUR OWN RISK` line marker.
 
 ---
 
