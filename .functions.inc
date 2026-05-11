@@ -116,7 +116,7 @@ get_board_support_packages() {
   log "Fetching SARPi board support packages from ${SLACKUK} ..."
   rsync -av --no-motd --progress --delete \
     "rsync://${SLACKUK}/sarpi/${RPIVERS}/current-${ARCH}/pkg/" \
-    "${CWD}/pkg/" || { log "ERROR: ${PROCSS} : Failed to rsync SARPi BSP packages from ${SLACKUK} ..." ; exit 1; }
+    "${PKGTMP}/bspkg" || { log "ERROR: ${PROCSS} : Failed to rsync SARPi board support packages from ${SLACKUK} ..." ; exit 1; }
 }
 
 # Mount virtual filesystems for chroot

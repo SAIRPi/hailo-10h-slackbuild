@@ -39,21 +39,20 @@
 ###
 
 # Preconditions
+CWD="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 [ ! -f ".settings.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : SETTINGS file not found!" && exit 1;
 [ ! -f ".functions.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : FUNCTIONS file not found!" && exit 1;
 
-# Set SAIRPi RELVER release version [datestamp]
+# Set and export release version
 date '+%d%b%y' > "${CWD}/.build-date"
-export RELVER="$(cat < "${CWD}/.build-date")"
+RELVER="$(cat < "${CWD}/.build-date")"
+export RELVER
 
 # load settings
 . .settings.inc
 
 # load functions
 . .functions.inc
-
-# Vars
-CWD="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
 # Special bulletin
 set -e
@@ -113,8 +112,8 @@ fi
 if [ "${START_CLEAN}" = "1" ]; then
 
   # Delete any existing build data
-  rm -rf "${PKGTMP}" "${CHRDIR}" "${CWD}/pkg"
-  mkdir -p "${PKGTMP}" "${CHRDIR}" "${CWD}/pkg"
+  rm -rf "${PKGTMP}" "${CHRDIR}" "${PKGTMP}/bspkg"
+  mkdir -p "${PKGTMP}" "${CHRDIR}" "${PKGTMP}/bspkg"
 
   # Copy HAILO.SlackBuild scripts to chroot
   rsync -a --delete --info=progress2 "${CWD}/_${HAICAP}.SlackBuild" "${CHRDIR}${TMP}"
@@ -149,7 +148,7 @@ if [ "${START_CLEAN}" = "1" ]; then
   log "Initialised chroot ca-certificates ..."
 
   # Install SARPi5_64 system packages
-  ROOT="${CHRDIR}" installpkg pkg/*.t?z
+  ROOT="${CHRDIR}" installpkg "${PKGTMP}"/bspkg/*.t?z
   log "Installed SARPi5_64 system packages into chroot dir ..."
  
 fi

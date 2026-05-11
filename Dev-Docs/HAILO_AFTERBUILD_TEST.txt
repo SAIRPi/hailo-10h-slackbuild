@@ -1,0 +1,279 @@
+###############################################################################
+# SAIRPi Project - Slackware AI on Raspberry Pi
+# https://sairpi.penthux.net
+#
+# HAILO-10H POST-BUILD TEST DOCUMENTATION
+#
+# Platform : Raspberry Pi 5 (AArch64 / armv8)
+# OS       : Slackware AArch64 -current
+# Hardware : Hailo-10H M.2 AI Accelerator Module
+# Linux    : kernel 6.18.26-v8-sairpi5_64
+# HailoRT  : v5.3.0
+#
+# This document records post-build testing of the SAIRPi-built packages
+# on the host Raspberry Pi 5.
+#
+# Maintainer: sairpi.project@penthux.net
+# Updated   : 2026-05-06
+###############################################################################
+
+
+# TEST ENVIRONMENT
+
+Hardware : Raspberry Pi 5 Model B 16GB
+OS       : Slackware AArch64 -current
+Hostname : maia
+Kernel   : 6.18.26-v8-sairpi5_64
+HailoRT  : 5.3.0
+Build    : 06May26
+
+Packages installed:
+  kernel-rpi5-6.18.26-armv8-1_slackcurrent_06May26_sai.txz
+  kernel-modules-rpi5-6.18.26-armv8-1_slackcurrent_06May26_sai.txz
+  kernel-headers-rpi5-6.18.26-armv8-1_slackcurrent_06May26_sai.txz
+  rpi5-boot-firmware-armv8-1_slackcurrent_06May26_sai.txz
+  hailort-rpi5-5.3.0-armv8-1_slackcurrent_06May26_sai.txz
+  hailort-pcie-drv-rpi5-5.3.0-armv8-1_slackcurrent_06May26_sai.txz
+  hailort-nnc-drv-rpi5-5.3.0-armv8-1_slackcurrent_06May26_sai.txz
+  hailo-10h-firmware-5.3.0-armv8-1_slackcurrent_06May26_sai.txz
+
+------
+
+
+# TEST 001 - PCIe DEVICE DETECTION
+
+Command : lspci
+Result  : PASS
+
+Hailo-10H detected at 0001:06:00.0:
+  0001:06:00.0 Co-processor: Hailo Technologies Ltd. Hailo-10H AI Processor (rev 01)
+
+------
+
+
+# TEST 002 - KERNEL DRIVER AND FIRMWARE LOAD
+
+Command : dmesg | grep -i hailo
+Result  : PASS
+
+Driver hailo1x_pci loaded, firmware programmed successfully:
+  hailo1x 0001:06:00.0: Firmware loaded in 1589 ms
+  hailo1x 0001:06:00.0: Device created at /dev/h1x-0
+
+Firmware files loaded:
+  hailo/hailo10h/customer_certificate.bin
+  hailo/hailo10h/scu_fw.bin
+  hailo/hailo10h/u-boot-0.dtb.signed
+  hailo/hailo10h/u-boot-spl.bin
+  hailo/hailo10h/fitImage
+  hailo/hailo10h/image-fs
+
+------
+
+
+# TEST 003 - HAILORTCLI DEVICE SCAN
+
+Command : hailortcli scan
+Result  : PASS
+
+  Hailo Devices:
+  [-] Device: pci/0001:06:00.0
+
+------
+
+
+# TEST 004 - FIRMWARE VERSION IDENTIFICATION
+
+Command : hailortcli fw-control identify
+Result  : PASS
+
+  Executing on device: pci/0001:06:00.0
+  Identifying board
+  Control Protocol Version: 2
+  Firmware Version: 5.3.0 (release,app)
+  Logger Version: 0
+  Device Architecture: HAILO10H
+
+------
+
+
+# TEST 005 - DEVICE MONITOR
+
+Command : hailortcli monitor
+Result  : PASS
+
+  Device ID             Architecture   NNC Utilization (%)   CPU Utilization (%)   RAM Utilization (%)   RAM Usage (MB)    On Die Temperature (C)   On Die Voltage (mV)
+  ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  pci/0001:06:00.0      HAILO10H       0.0                   0.0                   1.3                   90 / 7221         37.9                     800
+
+------
+
+
+# TEST 006 - DEVICE RUNTIME LOGS
+
+Command : hailortcli logs runtime
+Result  : PASS (with finding - see OBSERVATION 001)
+
+  Mar  9 12:48:58 hailo10 authpriv.err getty[558]: /dev/ttyS1: not a tty
+  Mar  9 12:49:08 hailo10 authpriv.err getty[561]: /dev/ttyS1: not a tty
+  Mar  9 12:49:18 hailo10 authpriv.err getty[564]: /dev/ttyS1: not a tty
+  Mar  9 12:49:18 hailo10 kern.info kernel: hailo_pci_ep_driver 222000.hailo_pci_ep_driver: Changed device state to D0
+  Mar  9 12:49:18 hailo10 user.info HailoRT-Server: [device.cpp:54] [Device] OS Version: Linux 5.15.32-yocto-standard-01685-g4cd9cfd0e6e7 #1 SMP PREEMPT Wed Feb 18 10:02:32 UTC 2026 aarch64
+  Mar  9 12:49:18 hailo10 user.info HailoRT-Server: [control.cpp:89] [control__parse_identify_results] firmware_version is: 5.3.0
+
+Notes:
+  The Hailo-10H runs its own internal Linux system (hostname: hailo10, kernel:
+  5.15.32 Yocto, aarch64). The runtime log is from that internal system, not
+  the Raspberry Pi host. The getty /dev/ttyS1 errors are from the device's own
+  inittab and can be ignored — they are not related to the host or this build.
+
+------
+
+
+# OBSERVATION 001 - HAILO-10H INTERNAL GETTY ERROR ON /dev/ttyS1
+
+Observed in : TEST 006 - Device Runtime Logs
+Status      : Reported to Hailo
+
+The Hailo-10H runtime log contains repeating errors:
+  authpriv.err getty[558]: /dev/ttyS1: not a tty
+  authpriv.err getty[561]: /dev/ttyS1: not a tty
+  authpriv.err getty[564]: /dev/ttyS1: not a tty
+
+The Hailo-10H runs an internal Yocto-based Linux system. Its inittab has an
+entry spawning getty on /dev/ttyS1 — a serial console intended for hardware
+debug use. When the device is deployed via PCIe with no physical serial
+connection, the TTY does not exist. Getty fails, init attempts to respawn it,
+fails again, and eventually disables it.
+
+This is a Hailo firmware/Yocto image configuration issue. The errors are
+harmless in a PCIe-only deployment but should be addressed in the firmware.
+
+------
+
+
+# TEST 007 - DEVICE SYSTEM CONTROL LOGS
+
+Command : hailortcli logs system_control
+Result  : PASS
+
+  [    0.000000] SCU-FW v1.10.0 [04da82d5] (based on SCP-Firmware v2.14.0 [cef63ea3], Hailo SCMI v0.50.1)
+  [    0.000000] [CC] LCS: 5
+  [    0.000000] [MERCURY_FUSES_INFO] Chip Serial Number: E8EBFDDBDEDFF769D7CE73F9
+  [    0.000000] [MERCURY_FUSES_INFO] H265 fuse out is set
+  [    0.000000] [MERCURY_FUSES_INFO] ISP fuse out is set
+  [    0.006303] [FWK] Module initialization complete!
+  [    0.028059] [MBIST] ISP subserver is not supported, skipping vision mbist
+  [    0.028281] [MBIST] H265 subserver is not supported, skipping H265 mbist
+  [    0.048821] [BOOT] SCU-FW notified PCIe host, ready to receive boot DTB image
+  [    0.059799] [BOOT] PCIe host completed sending boot DTB image
+  [    0.070842] [CFG] Calculating DDR config node hash...
+  [    0.074612] [CFG] DDR config node CRC32 hash: 0x1643089324 (total: 8588 bytes)
+  [    0.075700] [CFG] Calculating DDR patch node hash...
+  [    0.076388] [CFG] DDR patch node CRC32 hash: 0x1503807951 (total: 888 bytes)
+  [    0.132651] [DDR] DDR #0 initialized successfully (8 GiB, 4266MT/s, BIST)
+  [    0.162379] [BOOT] SCU-FW notified PCIe host that DRAM is initialized, ready to receive DRAM image
+  [    0.731332] [BOOT] PCIe host completed sending DRAM image
+  [    0.769502] [SYSTEM] Starting AP...
+  [    0.769641] [SYSTEM] AP initialized successfully
+  [    0.822187] [BOOT] AP bootloader (U-Boot) has successfully booted
+  [    1.229108] [POWER] Failed to power off pcie: clocks are still on
+  [    1.230946] [PD] Transition of pcie from <ON> to <OFF> failed: E_DEVICE
+  [    2.209133] [BOOT] AP software (Linux) has successfully booted
+
+Notes:
+  SCU-FW v1.10.0 confirmed. DDR 8 GiB initialised successfully. AP (Linux)
+  booted successfully. The PCIe power state transition failure is expected
+  behaviour — PCIe clocks remain active while the host is communicating with
+  the device.
+
+------
+
+
+# TEST 008 - DEVICE NNC LOGS
+
+Command : hailortcli logs nnc
+Result  : PASS (with note)
+
+  Output is binary data, not human-readable text.
+
+Notes:
+  The nnc log type returns raw binary output. This is expected — the NNC
+  (Neural Network Core) log data is not intended for direct terminal display.
+
+------
+
+
+# TEST 009 - POWER CONSUMPTION
+
+Command : hailortcli measure-power
+Result  : PASS
+
+  Executing on device: pci/0001:06:00.0
+  Current power consumption (W): 0.673171
+
+------
+
+# TEST 010 - KERNEL MODULES, DEVICE NODE AND FIRMWARE FILES
+
+Command : lsmod | grep hailo
+Result  : PASS
+
+  hailo1x_pci           147456  0
+
+Command : ls -la /dev/h1x-0
+Result  : PASS
+
+  crw------- 1 root root 510, 0 May  6 13:37 /dev/h1x-0
+
+Command : ls /lib/firmware/hailo/hailo10h/
+Result  : PASS (with finding - see OBSERVATION 002)
+
+  customer_certificate.bin  scu_fw.bin            u-boot-11.dtb.signed  u-boot-3.dtb.signed  u-boot-9.dtb.signed
+  fitImage                  u-boot-0.dtb.signed   u-boot-12.dtb.signed  u-boot-4.dtb.signed  u-boot-default.dtb.signed
+  hailo10h_fw.tar.gz        u-boot-1.dtb.signed   u-boot-13.dtb.signed  u-boot-5.dtb.signed  u-boot-spl.bin
+  image-fs                  u-boot-10.dtb.signed  u-boot-14.dtb.signed  u-boot-6.dtb.signed
+
+------
+
+
+# OBSERVATION 002 - hailo10h_fw.tar.gz PRESENT IN FIRMWARE DIRECTORY
+
+Observed in : TEST 010 - Firmware Files
+Status      : Reported to Hailo
+
+The file hailo10h_fw.tar.gz is present in /lib/firmware/hailo/hailo10h/
+alongside the extracted firmware files. Investigation shows this tarball is
+contained within itself — the outer hailo10h_fw.tar.gz extracts to include
+a copy of hailo10h_fw.tar.gz as one of its contents.
+
+The firmware loads correctly and the device operates normally. The nested
+tarball is redundant and should not be installed to /lib/firmware/. This is
+a Hailo packaging issue.
+
+------
+
+# TEST SUMMARY
+
+All available hailortcli tests completed successfully.
+
+Tests run:
+  001  lspci                        - PCIe device detection
+  002  dmesg | grep -i hailo        - Kernel driver and firmware load
+  003  hailortcli scan              - Device scan
+  004  hailortcli fw-control identify - Firmware identification
+  005  hailortcli monitor           - Device monitor
+  006  hailortcli logs runtime      - Device runtime logs
+  007  hailortcli logs system_control - Device system control logs
+  008  hailortcli logs nnc          - Device NNC logs
+  009  hailortcli measure-power     - Power consumption
+  010  lsmod | grep hailo           - Verify presence of firmware files, device driver and node
+
+Tests not run:
+  hailortcli run, run2, benchmark, parse-hef - require a compiled HEF network
+  file which is outside the scope of this build.
+
+------
+
+
+# EOF<*>

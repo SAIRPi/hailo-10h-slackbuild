@@ -65,7 +65,8 @@ IFS="$(printf '\n\t')"
 log "Stage 2: ${HAICAP}.SlackBuild ..."
 
 # Set legacy cmake in PATH
-export PATH="${CMAKE_LEGACY_INSTALL_DIR}/bin:${PATH}"
+PATH="${CMAKE_LEGACY_INSTALL_DIR}/bin:${PATH}"
+export PATH
 log "Legacy cmake PATH set: ${CMAKE_LEGACY_INSTALL_DIR}/bin ..."
 
 # Start clean

@@ -1,0 +1,452 @@
+###############################################################################
+# SAIRPi Project - Slackware AI on Raspberry Pi
+# https://sairpi.penthux.net
+#
+# HAILO BUILD DEVELOPMENT DOCUMENTATION
+#
+# Platform : Raspberry Pi 5 (AArch64 / armv8)
+# OS       : Slackware AArch64 -current
+# Hardware : Hailo-10H M.2 AI Accelerator Module
+# Linux    : kernel 6.18.26
+# HailoRT  : v5.3.0
+#
+# This document records all issues, patches, source modifications, cmake flag
+# decisions, workarounds and findings encountered during the HailoRT build
+# process on Slackware AArch64. Warts and all.
+#
+# Maintainer: sairpi.project@penthux.net
+# Updated   : 2026-05-06
+###############################################################################
+
+
+# BACKGROUND
+
+This is the first known build of HailoRT for Slackware AArch64 Linux on a
+Raspberry Pi 5. It has proven not to be a straight-forward build process.
+
+Currently, the HailoRT source requires cmake 3.3x to build. Slackware AArch64 
+has cmake 4.3.x installed which is incompatible with cmake 3.3. Any attempts 
+to build HailoRT software using cmake 4.3.x result in terminal errors which 
+crash the compile process.
+
+The build environment is a Slackware AArch64 chroot that's been constructed 
+and is managed by a SAIRPi.SlackBuild script process. We chose this specific
+route in order to isolate R&D and not impact on the host system. It has been
+a rolling 'test and verify affair' because we're in uncharted territory as 
+far as building HailoRT on Slackware AArch64 is concerned.
+
+This document covers the work we've engaged in and undertaken to successfully
+build HailoRT and PCIe drivers for the Hailo-10H M.2 AI Accelerator Module on
+the Raspberry Pi 5 running Slackware AArch64 Linux.
+
+------
+
+
+# BUILD SYSTEM OVERVIEW
+
+Two-stage build process:
+
+STAGE 1 - Host system (/tmp/_SAIRPi.SlackBuild/SAIRPi.SlackBuild):
+  - Downloads RPi Linux kernel source, boot-firmware, HailoRT, HailoRT drivers
+  - Downloads and installs Slackware AArch64 packages into chroot
+  - Copies _HAILO.SlackBuild scripts into chroot
+  - Mounts chroot virtual filesystems
+  - Invokes hailo.SlackBuild inside chroot
+
+STAGE 2 - Chroot environment (/tmp/sairpi-chroot/_HAILO.SlackBuild/hailo.SlackBuild):
+  - Builds legacy cmake 3.31.12 (required for HailoRT)
+  - Builds RPi Linux kernel (bcm2712_defconfig, Image.gz, DTBs, modules, headers)
+  - Builds HailoRT runtime library (libhailort)
+  - Builds HailoRT PCIe driver (hailo1x_pci.ko)
+  - Builds HailoRT integrated NNC driver (hailo_integrated_nnc.ko)
+  - Packages RPi boot firmware blobs (config.txt.new included)
+  - Downloads and packages Hailo-10H device firmware from Hailo AWS S3
+
+
+# DIRECTORY STRUCTURE
+
+_SAIRPi.SlackBuild/                   - Stage 1: host-side orchestrator
+  SAIRPi.SlackBuild                   - Stage 1 entry point
+  .settings.inc                       - Stage 1 configuration
+  .functions.inc                      - Stage 1 shared functions
+  .build-date                         - Build datestamp (auto-generated)
+  get-linux-kernel-source.sh          - Downloads RPi Linux kernel source
+  get-boot-firmware-rpi.sh            - Downloads RPi boot firmware source
+  get-hailort-source.sh               - Downloads HailoRT source
+  get-hailort-drivers-source.sh       - Downloads HailoRT drivers source
+  chroot-get-syspkg.sh                - Fetches SARPi board support packages
+  chroot-pkg-forge.sh                 - Downloads/installs Slackware pkgs into chroot
+  pkg/                                - SARPi BSP packages (kernel, modules, etc.)
+  BuildLogs/                          - Build log archive
+  LICENSE                             - MIT LICENSE
+
+_HAILO.SlackBuild/                    - Stage 2: chroot-side builder
+  hailo.SlackBuild                    - Stage 2 entry point
+  .settings.inc                       - Stage 2 configuration
+  .functions.inc                      - Stage 2 shared functions
+  build-legacy-cmake-source.sh        - Builds cmake 3.31.12 from source
+  build-linux-source.sh               - Builds RPi Linux kernel
+  build-hailort-source.sh             - Builds HailoRT runtime libraries
+  build-hailort-drivers-source.sh     - Builds HailoRT PCIe and NNC drivers
+  build-boot-firmware-rpi.sh          - Packages RPi boot firmware blobs
+  build-hailort-firmware-rpi.sh       - Downloads and packages Hailo-10H firmware
+  config.txt.new                      - RPi 5 config.txt (installed by boot firmware pkg)
+  patch/
+    hailort-protobuf-cmake-aarch64-lib64.patch  - Fix protobuf lib64 path on AArch64
+    hailort-drivers-del-timer-sync-kernel-6.15.patch  - Fix del_timer_sync kernel 6.15+
+    patch_desc.log                    - Patch descriptions log
+  HAILO_BUILD_DEV_DOC.txt             - This document
+  HAILO_AFTERBUILD_TEST.txt           - Post-build test documentation
+  LICENSE                             - MIT LICENSE
+
+------
+
+
+# ISSUE 001 - cmake 4.x INCOMPATIBILITY WITH HailoRT
+
+Date    : 2026-04-26
+Status  : RESOLVED via legacy cmake 3.31.12
+Severity: CRITICAL - terminal error
+
+Description:
+  Slackware AArch64 current ships cmake 4.3.2 (/usr/bin/cmake). HailoRT
+  requires cmake 3.x. cmake 4.x removed the protobuf_generate_cpp() command
+  which HailoRT uses in:
+    hailort/common/genai/serializer/CMakeLists.txt:5
+
+  Error seen with cmake 4.x:
+    CMake Error at hailort/common/genai/serializer/CMakeLists.txt:5
+    (protobuf_generate_cpp): Unknown CMake command "protobuf_generate_cpp".
+
+Resolution:
+  Build and install cmake 3.31.12 from source as a legacy cmake alongside
+  the system cmake 4.3.2. cmake 3.31.12 installs to /usr/local/cmake-3.31/.
+
+  Three mechanisms ensure cmake 3.31.12 is used instead of 4.3.2:
+
+  1. Symlink: /usr/local/bin/cmake -> /usr/local/cmake-3.31/bin/cmake
+     /usr/local/bin is before /usr/bin in PATH, so cmake 3.31.12 is always
+     found first.
+
+  2. Explicit PATH export in hailo.SlackBuild:
+     export PATH="/usr/local/cmake-3.31/bin:${PATH}"
+     Guarantees cmake 3.31.12 is first in PATH for the automated build and
+     all child processes.
+
+  3. cmake-legacy.sh profile script sourced at chroot entry:
+     [ -f /etc/profile.d/cmake-legacy.sh ] && . /etc/profile.d/cmake-legacy.sh
+     Written to chroot by SAIRPi.SlackBuild (host side). Ensures cmake 3.31.12
+     is in PATH for all shell types when entering the chroot manually.
+
+  cmake 3.31.12 confirmed active:
+    $ cmake --version
+    cmake version 3.31.12
+
+Files modified:
+  _HAILO.SlackBuild/build-legacy-cmake-source.sh - builds cmake 3.31.12
+  _HAILO.SlackBuild/.settings.inc - CMAKE_LEGACY_VER, CMAKE_LEGACY_INSTALL_DIR
+  _HAILO.SlackBuild/hailo.SlackBuild - PATH export
+  _SAIRPi.SlackBuild/SAIRPi.SlackBuild - writes cmake-legacy.sh to chroot
+
+
+# ISSUE 002 - protobuf_generate_cpp NOT DEFINED (AArch64 lib64 path issue)
+
+Date    : 2026-04-26
+Status  : RESOLVED via patch + automated patch application
+Severity: CRITICAL - terminal error
+
+Description:
+  Even with cmake 3.31.12, cmake configure failed with:
+    CMake Error at hailort/common/genai/serializer/CMakeLists.txt:5
+    (protobuf_generate_cpp): Unknown CMake command "protobuf_generate_cpp".
+
+  Root cause:
+  HailoRT uses FetchContent to download and build protobuf v21.12 from source.
+  After building, it attempts to include protobuf's cmake config files to
+  obtain the protobuf_generate_cpp() macro:
+
+    hailort/cmake/external/protobuf.cmake lines 48-49:
+      include(/usr/src/hailort/hailort/external/protobuf-install/lib/cmake/protobuf/protobuf-config.cmake)
+      include(/usr/src/hailort/hailort/external/protobuf-install/lib/cmake/protobuf/protobuf-module.cmake)
+
+  The protobuf install path is hardcoded in protobuf.cmake as:
+    /usr/src/hailort/hailort/external/protobuf-install/lib/cmake/protobuf
+
+  However on AArch64 Linux, protobuf installs its cmake config files to
+  lib64/ not lib/:
+    ACTUAL:   /usr/src/hailort/hailort/external/protobuf-install/lib64/cmake/protobuf/
+    EXPECTED: /usr/src/hailort/hailort/external/protobuf-install/lib/cmake/protobuf/
+
+  The include() calls silently fail (path not found), protobuf_generate_cpp()
+  is never defined, and cmake errors out when it encounters the call.
+
+  NOTE: Hailo will be notified of this issue. The comment in protobuf.cmake 
+  line 36 reflects the related issue:
+    # TODO: consider importing protobuf_generate_cpp instead?
+
+Resolution:
+  Patch hailort/cmake/external/protobuf.cmake to detect lib64 first on
+  non-Windows platforms, falling back to lib if lib64 does not exist.
+
+  Patch file:
+    _HAILO.SlackBuild/patch/hailort-protobuf-cmake-aarch64-lib64.patch
+
+  Patch applied automatically in build-hailort-source.sh before cmake
+  configure. Uses --forward flag so it is safely skipped if already applied.
+
+  Patch diff:
+    --- a/hailort/cmake/external/protobuf.cmake
+    +++ b/hailort/cmake/external/protobuf.cmake
+    @@ -41,7 +41,9 @@
+             if(WIN32)
+                 set(PROTOBUF_CONFIG_DIR /usr/src/hailort/hailort/external/protobuf-install/cmake)
+    -        else()
+    -            set(PROTOBUF_CONFIG_DIR /usr/src/hailort/hailort/external/protobuf-install/lib/cmake/protobuf)
+    +        elseif(EXISTS /usr/src/hailort/hailort/external/protobuf-install/lib64/cmake/protobuf)
+    +            set(PROTOBUF_CONFIG_DIR /usr/src/hailort/hailort/external/protobuf-install/lib64/cmake/protobuf)
+    +        else()
+    +            set(PROTOBUF_CONFIG_DIR /usr/src/hailort/hailort/external/protobuf-install/lib/cmake/protobuf)
+             endif()
+
+Files modified:
+  hailort/cmake/external/protobuf.cmake (patched via build script)
+  _HAILO.SlackBuild/patch/hailort-protobuf-cmake-aarch64-lib64.patch
+  _HAILO.SlackBuild/build-hailort-source.sh (patch application added)
+
+
+# ISSUE 003 - HAILO_BUILD_TOOLS=ON references non-existent directory
+
+Date    : 2026-04-26
+Status  : RESOLVED - flag set to OFF
+Severity: MEDIUM - configuration failure
+
+Description:
+  Initial cmake configure used -DHAILO_BUILD_TOOLS=ON assuming this built
+  hailortcli. It does not. It references an internal 'tools' subdirectory
+  that is not included in the public HailoRT release:
+
+    CMake Error at hailort/CMakeLists.txt:119 (add_subdirectory):
+      add_subdirectory given source "tools" which is not an existing directory.
+
+  hailortcli is actually built unconditionally via add_subdirectory(hailortcli)
+  at line 109 of hailort/CMakeLists.txt - no flag required.
+
+Resolution:
+  Set -DHAILO_BUILD_TOOLS=OFF in cmake configure command.
+  hailortcli is still built automatically regardless of this flag.
+
+Files modified:
+  _HAILO.SlackBuild/build-hailort-source.sh
+
+
+# CMAKE CONFIGURE FLAGS - RATIONALE
+
+Flag                          Value     Logic
+-DCMAKE_BUILD_TYPE            Release   Production build, optimised
+-DHAILO_BUILD_TOOLS           OFF       Internal tools dir not in public release
+                                        hailortcli is built unconditionally
+-DHAILO_BUILD_GSTREAMER       OFF       GStreamer dev libs not in build env
+-DHAILO_BUILD_EXAMPLES        OFF       Not needed for runtime
+-DHAILO_BUILD_UT              OFF       No unit tests in production build
+-DHAILO_BUILD_GENAI_SERVER    OFF       Not required at this stage
+-DHAILO_BUILD_HAILORT_SERVER  OFF       Not required at this stage
+-DCMAKE_INSTALL_PREFIX        /usr      Slackware standard install prefix
+
+Note: hailortcli IS built - it is unconditional in hailort/CMakeLists.txt.
+Note: HAILO_BUILD_GENAI_SERVER and HAILO_BUILD_HAILORT_SERVER can be enabled
+      in future builds once the core runtime is stable.
+
+
+# ISSUE 004 - del_timer_sync() removed in Linux 6.15+
+
+Date    : 2026-04-26
+Status  : RESOLVED via patch
+Severity: CRITICAL - terminal error
+
+Description:
+  linux/vdma/monitor.c:53 calls del_timer_sync() which was removed in
+  Linux 6.15 and replaced by timer_delete_sync(). Build fails with:
+
+    ../vdma/monitor.c:53:5: error: implicit declaration of function
+    'del_timer_sync' [-Wimplicit-function-declaration]
+
+  Kernel 6.18.26 is affected. This will affect all builds on kernel 6.15
+  and above.
+
+Resolution:
+  Replace del_timer_sync() with timer_delete_sync() in monitor.c:53.
+
+  Patch file:
+    _HAILO.SlackBuild/patch/hailort-drivers-del-timer-sync-kernel-6.15.patch
+
+  Patch applied automatically in build-hailort-drivers-source.sh before
+  the driver build. Uses --forward flag so it is safely skipped if already
+  applied.
+
+  Patch diff:
+    --- a/linux/vdma/monitor.c
+    +++ b/linux/vdma/monitor.c
+    @@ -50,5 +50,5 @@
+     void hailo_vdma_monitor_stop(struct hailo_vdma_monitor *monitor)
+     {
+    -    del_timer_sync(&monitor->timer);
+    +    timer_delete_sync(&monitor->timer);
+     }
+
+Files modified:
+  linux/vdma/monitor.c (patched via build script)
+  _HAILO.SlackBuild/patch/hailort-drivers-del-timer-sync-kernel-6.15.patch
+  _HAILO.SlackBuild/build-hailort-drivers-source.sh (patch application added)
+
+
+# ISSUE 005 - hailo1x_pci MSI FAILURE THROUGH ASMedia PCIe SWITCH
+
+Date    : 2026-05-05
+Status  : RESOLVED via device tree overlay
+Severity: CRITICAL - device not detected
+
+Description:
+  After installing the HailoRT packages and rebooting, hailortcli scan
+  reported "Hailo devices not found". dmesg showed the hailo1x_pci driver
+  probing but failing with:
+
+    hailo1x 0001:06:00.0: Failed to enable MSI -28
+
+  Error -28 is -ENOSPC — the kernel could not allocate an MSI vector. The
+  Hailo-10H sits behind an ASMedia ASM2806 4-port PCIe switch connected to
+  the BCM2712 PCIe bridge on the Raspberry Pi 5. MSI vector allocation
+  through the ASMedia switch fails without explicit device tree configuration.
+
+  The hailo1x_pci driver calls pci_enable_msi() with no fallback:
+    // TODO HRT-2253: use new api for enabling msi: (pci_alloc_irq_vectors)
+    if ((err = pci_enable_msi(board->pdev))) {
+        hailo_err(board, "Failed to enable MSI %d\n", err);
+  Hailo acknowledge this in TODO HRT-2253.
+
+Resolution:
+  Add the following to /boot/config.txt under [pi5]:
+    dtparam=nvme
+    dtoverlay=pciex1-compat-pi5,no-mip
+
+  dtparam=nvme enables the PCIe interface on the Raspberry Pi 5.
+  dtoverlay=pciex1-compat-pi5,no-mip enables MSI through PCIe switches
+  on the Raspberry Pi 5.
+
+  These lines are included in config.txt.new produced by the
+  build-boot-firmware-rpi.sh build script.
+
+Files modified:
+  _HAILO.SlackBuild/config.txt.new - dtparam=nvme and dtoverlay added under [pi5]
+
+
+# HAILO-10H DEVICE FIRMWARE
+
+The Hailo-10H device firmware is not distributed in the HailoRT source tree.
+It is a separate binary download hosted on Hailo's AWS S3 bucket.
+
+The hailort-drivers repo includes a reference download script:
+  hailort-drivers/download_firmware_hailo10h.sh
+
+That script downloads from:
+  https://hailo-hailort.s3.eu-west-2.amazonaws.com/Hailo10H/5.3.0/FW/hailo10h_fw.tar.gz
+
+It has the HailoRT version hardcoded to 5.3.0.
+
+Our build script (build-hailort-firmware-rpi.sh) uses the same URL pattern
+but derives the version dynamically from the HailoRT source at build time by
+grepping FIRMWARE_VERSION_MAJOR/MINOR/REVISION from hailort/CMakeLists.txt.
+
+This ensures the firmware version always matches the HailoRT version being
+built, regardless of what version is checked out.
+
+The firmware tarball (hailo10h_fw.tar.gz) extracts to a set of binary blobs
+which are installed to /lib/firmware/hailo/hailo10h/. The hailo1x_pci driver
+requests these files via the kernel firmware loader at device probe time.
+
+The build produces:
+  hailo-10h-firmware-5.3.0-armv8-1_slackcurrent_06May26_sai.txz
+  hailo-10h-firmware-5.3.0-armv8-1_slackcurrent_06May26_sai.md5
+
+Installed to:
+  /lib/firmware/hailo/hailo10h/
+
+------
+
+
+# PATCHES INDEX
+
+Patch directory (host):   /tmp/_HAILO.SlackBuild/patch/
+Patch directory (chroot): /tmp/sairpi-chroot/tmp/_HAILO.SlackBuild/patch/
+
+001  hailort-protobuf-cmake-aarch64-lib64.patch
+     Target : hailort/cmake/external/protobuf.cmake
+     Fixes  : protobuf cmake config path on AArch64 (lib64 vs lib)
+     Applied: build-hailort-source.sh (automatic, before cmake configure)
+     Status : Active - awaiting upstream fix from Hailo
+
+002  hailort-drivers-del-timer-sync-kernel-6.15.patch
+     Target : linux/vdma/monitor.c
+     Fixes  : del_timer_sync() removed in Linux 6.15+, replaced by timer_delete_sync()
+     Applied: build-hailort-drivers-source.sh (automatic, before driver build)
+     Status : Active - awaiting upstream fix from Hailo
+
+
+# BUILD ENVIRONMENT
+
+Host OS          : Slackware AArch64 current
+Host Hardware    : Raspberry Pi 5
+Chroot           : /tmp/sairpi-chroot
+cmake (legacy)   : 3.31.12 (/usr/local/cmake-3.31/bin/cmake)
+cmake (system)   : 4.3.2   (/usr/bin/cmake) - NOT used for HailoRT
+gcc              : 15.2.0
+Kernel built     : 6.18.26-v8-sairpi5_64
+HailoRT version  : 5.3.0
+protobuf version : 21.12 (v3.21.12, built from source via FetchContent)
+
+
+# BUILD RESULTS
+
+HailoRT v5.3.0 built and installed successfully on 2026-05-06.
+
+Installed:
+  /usr/lib64/libhailort.so.5.3.0
+  /usr/lib64/libhailort.so
+  /usr/lib64/libhailopp.so.1.0.0
+  /usr/lib64/libhailopp.so.1
+  /usr/lib64/libhailopp.so
+  /usr/lib64/cmake/HailoRT/
+  /usr/lib64/cmake/HailoPP/
+  /usr/include/hailo/
+  /usr/bin/hailortcli
+
+Build time: not recorded on this run - to be added on subsequent builds.
+
+HailoRT drivers v5.3.0 built and installed successfully on 2026-05-06.
+
+Installed:
+  /lib/modules/6.18.26-v8-sairpi5_64/kernel/drivers/misc/hailo1x_pci.ko.xz
+  /lib/modules/6.18.26-v8-sairpi5_64/kernel/drivers/misc/hailo_integrated_nnc.ko.xz
+
+##########################################
+##          DEVELOPMENT STATUS          ##
+##########################################
+
+This work is ongoing. The SAIRPi build system, packages, documentation and
+test procedures described in this document are all under active development.
+Results, findings and fixes will be updated as development progresses.
+
+These build scripts and files WILL change. In order to get results and a working
+environment we have had to navigate uncharted territory and cross many borders
+that never before existed. For development purposes of this first-of-its-kind work 
+it's messy right now but the important thing is that it's working as expected.
+
+Rest assured that before any build scripts are released publicly we will revise
+and clean-up the process dramatically.
+
+Hailo Technologies are advised that all issues and findings documented here are 
+reported "as is" and they are confirmed and verified.
+
+SAIRPi Project - sairpi.project@penthux.net
+
+
+# EOF<*>

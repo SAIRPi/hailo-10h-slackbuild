@@ -1,0 +1,115 @@
+###############################################################################
+# SAIRPi Project - Slackware AI on Raspberry Pi
+# https://sairpi.penthux.net
+#
+# SAIRPi JAFFAWORKS R&D DOCUMENTATION
+#
+# Platform : Raspberry Pi 5 (AArch64 / armv8)
+# OS       : Slackware AArch64 -current
+# Hardware : Hailo-10H M.2 AI Accelerator Module
+# Linux    : kernel 6.18.24
+# HailoRT  : v5.3.0
+#
+# This document is a brief outline of the work undertaken and steps taken
+# in successfully building HailoRT software in Slackware AArch64 Linux on
+# a Raspberry Pi 5.
+#
+# Maintainer: sairpi.project@penthux.net
+# Created   : 2026-04-24
+# Updated   : 2026-04-27
+###############################################################################
+
+
+# INITIAL APPROACH
+
+First attempt was a straight build of HailoRT on a running Slackware
+AArch64 system. cmake 4.3.x killed it immediately with:
+
+  CMake Error at hailort/common/genai/serializer/CMakeLists.txt:5
+  (protobuf_generate_cpp): Unknown CMake command "protobuf_generate_cpp".
+
+We decided to build inside a chroot environment to fully isolate the
+build environment from the host system.
+
+The chroot approach was the right decision. It enabled us to work very
+quickly and iron out any issues that arose. All totally separate and
+independent of the running host system. 
+
+See HAILO_BUILD_DEV_DOC.txt for the full technical breakdown of all
+issues, patches, and cmake flag decisions.
+
+
+# CHROOT BUILD ENVIRONMENT
+
+Chroot: /tmp/sairpi-chroot
+
+The package list in chroot-pkg-forge.sh was built iteratively. We started
+with base packages, added missing commands and libraries as they surfaced
+during testing. This process took approx. 8-9 days.
+
+
+# BUILD ARCHITECTURE
+
+Two-stage build process:
+
+  STAGE 1 - SAIRPi.SlackBuild (HOSTNAME 'maia' -  Raspberry Pi 5)
+  Downloads all source, fetches Slackware packages, constructs and
+  populates the chroot, then invokes Stage 2.
+
+  STAGE 2 - hailo.SlackBuild (inside /tmp/sairpi-chroot)
+  Builds cmake 3.31.12, RPi Linux kernel, HailoRT runtime libraries,
+  HailoRT PCIe and NNC kernel drivers, RPi boot firmware package.
+
+
+# KERNEL AND FIRMWARE
+
+Kernel branch  : rpi-6.18.y  (next LTS, currently tracked by Slackware)
+Kernel defconfig: bcm2712_defconfig (Pi 5 base config - under review)
+Firmware branch: next (6.18.x not in master yet - switch when it is)
+
+
+# PACKAGE NAMING
+
+Package appnames use rpi5 as the hardware identifier.
+Architecture is already encoded in the filename (armv8).
+SAIRPi Project identity is in the TAG (_sai).
+Future-compatible: will be when the time comes.
+
+Package naming and build scripts are for R&D purposes and will evolve 
+once testing and verification is complete and packages are ready for 
+public release. That's the plan, moving forward, in any case.
+
+[2026-04-27] We haven't yet packaged the source(s) but before they're 
+publicly released this will certainly be done.
+
+
+# BUILD ENVIRONMENT
+
+Host OS       : Slackware AArch64 current
+Host Hardware : Raspberry Pi 5
+Chroot        : /tmp/sairpi-chroot
+cmake legacy  : 3.31.12 (/usr/local/cmake-3.31/bin/cmake)
+cmake system  : 4.3.2   (/usr/bin/cmake) - NOT used for HailoRT
+gcc           : 15.2.0
+Kernel        : 6.18.24-v8-sairpi5_64
+HailoRT       : 5.3.0
+
+
+# BUILD RESULTS - 2026-04-24 / 2026-04-27
+
+  kernel-rpi5-6.18.24-armv8-1_slackcurrent_27Apr26_sai.txz
+  kernel-modules-rpi5-6.18.24-armv8-1_slackcurrent_27Apr26_sai.txz
+  kernel-headers-rpi5-6.18.24-armv8-1_slackcurrent_27Apr26_sai.txz
+  hailort-rpi5-5.3.0-armv8-1_slackcurrent_27Apr26_sai.txz
+  hailort-pcie-drv-rpi5-5.3.0-armv8-1_slackcurrent_27Apr26_sai.txz
+  hailort-nnc-drv-rpi5-5.3.0-armv8-1_slackcurrent_27Apr26_sai.txz
+  rpi5-boot-firmware-armv8-1_slackcurrent_27Apr26_sai.txz
+
+All packages include slack-desc and doinst.sh files.
+All packages include the build script that was used to create them.
+Driver packages run depmod -a on installation.
+Boot firmware includes Raspberry Pi Ltd. licence files in /boot and 
+/usr/doc.
+
+
+# EOF<*>

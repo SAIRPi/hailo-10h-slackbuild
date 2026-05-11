@@ -1,0 +1,21 @@
+###############################################
+#----------- Hailo-10H.SlackBuild ------------#
+###############################################
+
+Target OS..............: Slackware AArch64 current
+Platform...............: Raspberry Pi 5
+Hardware...............: Hailo 10H M.2 AI Accelerator Module
+Project eng............: v1.0.5
+Maintainer(s)..........: sairpi.project@penthux.net
+Homepage URL...........: https://sairpi.penthux.net
+
+# Hailo.SlackBuild Batch
+Build Batch Ref ID.....: SAI52026131164151
+
+# Hailo-10H.SlackBuild Host Status
+Build System...........: Linux maia 6.18.28-v8-sarpi5_64 #1 SMP PREEMPT Sat May  9 07:15:36 BST 2026 aarch64 GNU/Linux
+Build System OS........: Slackware 15.0 aarch64 (post 15.0 -current) [armv8 64-bit]
+Build System Hardware..: Raspberry Pi 5 Model B Rev 1.1 
+Build System Revision..: e04171
+Build System Serial....: eaca75ece918b095
+
