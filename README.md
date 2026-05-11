@@ -19,6 +19,8 @@ It involves a two-stage build process:
 
 - Both Hailo 10H SlackBuild stages use a `/tmp/SBo` directory on the host system and in the chroot (where applicable) for storing files and source data. 
 
+- The build scripts will create a chroot directory, mount it, and unmount it automatically once the process has completed or exited with [CTRL+C]
+
 ---
 
 ## Usage
@@ -30,20 +32,23 @@ Download this **hailo-10h-slackbuild** repository by cloning it:
 ```bash
   git clone https://github.com/SAIRPi/hailo-10h-slackbuild
 ```
-Must be run as **root** from within the `_hailo-10h.SlackBuild` directory:
+The build process must be run as **root** user from within the download directory. For example:
 
 ```bash
   cd _hailo-10h.SlackBuild
   ./hailo-10h.SlackBuild
 ```
 
-You will be prompted to:
+You will be prompted:
 
+```bash
+ To start a clean hailo-10h.SlackBuild press [Y] ...
+ To start a hailo-10h.SlackBuild using existing data press [K] ...
+ Or press any other key to EXIT ...
 ```
-[Y]  Start a clean build
-[K]  Keep existing data and continue
-Any other key to exit
-```
+
+- For an initial build (i.e. the first time it's run) `Y` should be selected. 
+- Once the source(s) have been compiled, on subsequent build runs `K` can be selected.
 
 ---
 
