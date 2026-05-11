@@ -48,8 +48,8 @@ You will be prompted:
  Or press any other key to EXIT ...
 ```
 
-- For an initial build (i.e. the first time it's run) [`Y`] should be selected. 
-- Once the source(s) have been compiled, on subsequent build runs [`K`] can be selected.
+- To start a clean build (i.e. the first time it's run or to download updated sources) then [`Y`] should be selected. 
+- On subsequent build runs, once the source(s) have been compiled, to build with existing data [`K`] can be selected.
 - The build process will create a chroot directory, mount it, and unmount it automatically once the process has completed. Or if/when it's exited with [`CTRL+C`].
 
 ---
