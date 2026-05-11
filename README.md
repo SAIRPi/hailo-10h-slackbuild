@@ -120,8 +120,8 @@ Each package has a corresponding `.md5` checksum file. On completion, all built 
 ---
 
 ## Directory Tree
-
-root@maia:/tmp/_hailo-10h.SlackBuild# tree
+```bash
+user@slackware:/tmp/_hailo-10h.SlackBuild# tree
 .
 ├── BuildLogs
 ├── Dev-Docs
@@ -177,7 +177,7 @@ root@maia:/tmp/_hailo-10h.SlackBuild# tree
 │       └── slack-desc
 ├── chroot-pkg-forge.sh
 └── hailo-10h.SlackBuild
-
+```
 ------
 
 ## Build Notes
