@@ -1,6 +1,6 @@
 # hailo-10h.SlackBuild
 
-**SAIRPi Project** — Slackware AI on Raspberry Pi  
+**SAIRPi Project** - Slackware AI on Raspberry Pi  
 https://sairpi.penthux.net
 
 Bash script build process that produces a Slackware AArch64 package set with full support for the Hailo-10H M.2 AI Accelerator Module on a Raspberry Pi 5. 
