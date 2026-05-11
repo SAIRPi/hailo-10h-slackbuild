@@ -133,7 +133,6 @@ user@slackware:/tmp/_hailo-10h.SlackBuild# tree
 ├── LICENSE
 ├── README.md
 ├── _HAILO.SlackBuild
-│   ├── LICENSE
 │   ├── build-legacy-cmake-source.sh
 │   ├── hailo.SlackBuild
 │   ├── hailort-10h-firmware
