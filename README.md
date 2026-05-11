@@ -30,7 +30,7 @@ You must have git installed on your Slackware AArch64 Linux system with Internet
 To download this **hailo-10h-slackbuild** repository, use `git clone`:
 
 ```bash
-  git clone https://github.com/SAIRPi/hailo-10h-slackbuild
+  git clone https://github.com/SAIRPi/hailo-10h-slackbuild _hailo-10h.SlackBuild
 ```
 The build process must be run as **root** user from within the download directory. For example:
 
