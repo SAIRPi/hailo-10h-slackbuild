@@ -49,7 +49,7 @@ You will be prompted:
 ```
 
 - To start a clean build (i.e. the first time it's run or to download updated sources) then [`Y`] should be selected. 
-- On subsequent build runs, once the source(s) have been compiled, to build with existing data [`K`] can be selected.
+- On subsequent build runs, once the source(s) have been compiled, to build with existing data [`K`] should be selected.
 - The build process will create a chroot directory, mount it, and unmount it automatically once the process has completed. Or if/when it's exited with [`CTRL+C`].
 
 ---
