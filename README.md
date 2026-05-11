@@ -14,11 +14,12 @@ Once each run of the build process is executed it requires an initial input sele
 
 It involves a two-stage build process:
 
-**Stage 1** runs on the Raspberry Pi 5 host. Downloads all source (Raspberry Pi Linux kernel, boot firmware, HailoRT, HailoRT drivers, HailoRT firmware), downloads and installs Slackware AArch64 packages into a chroot directory:  `/tmp/hailo-chroot`, then invokes Stage 2.
+**Stage 1** runs on the Raspberry Pi 5 host. Downloads all source (Raspberry Pi Linux kernel, boot firmware, HailoRT, HailoRT drivers, HailoRT firmware), downloads and installs Slackware AArch64 packages and [SARPi Project](https://sarpi.penthux.net/index.php?p=downloads) board support packages into a chroot directory:  `/tmp/hailo-chroot`, then invokes Stage 2.
 
 **Stage 2** runs inside the chroot. Builds cmake 3.31.12 from source (required - HailoRT source is currently incompatible with cmake 4.x), builds the Raspberry Pi Linux kernel 6.18.x, HailoRT runtime, PCIe and NNC drivers, and packages the Raspberry Pi boot firmware and Hailo-10H device firmware.
 
 - Included in stage 1 and 2 are .settings.inc files which contain settings that can be modified by the user. See: **Configuration** in this README.
+- SARPi board support packages are required to build legacy cmake 3.32.12 source in the chroot environment.
 - Both Hailo 10H SlackBuild stages use a `/tmp/SBo` directory on the host system and in the chroot (where applicable) for storing files and source data. 
 
 ---
