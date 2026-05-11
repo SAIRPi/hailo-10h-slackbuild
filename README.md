@@ -122,8 +122,11 @@ Each package has a corresponding `.md5` checksum file. On completion, all built 
 
 ## Directory Tree
 ```bash
-user@slackware:/tmp/_hailo-10h.SlackBuild# tree
+user@slackware:/tmp/_hailo-10h.SlackBuild# tree -a
 .
+├── .build-date
+├── .functions.inc
+├── .settings.inc
 ├── BuildLogs
 ├── Dev-Docs
 │   ├── HAILO_AFTERBUILD_TEST.txt
@@ -134,6 +137,8 @@ user@slackware:/tmp/_hailo-10h.SlackBuild# tree
 ├── LICENSE
 ├── README.md
 ├── _HAILO.SlackBuild
+│   ├── .functions.inc
+│   ├── .settings.inc
 │   ├── build-legacy-cmake-source.sh
 │   ├── hailo.SlackBuild
 │   ├── hailort-10h-firmware
