@@ -116,9 +116,9 @@ PRETTY_NAME="Slackware 15.0 aarch64 (post 15.0 -current)"
 
 Packages follow the Slackware package file naming convention with an additional custom tag suffix:
 ```
-<name>-<version>-<arch>-<build>_<tag>.txz
+<name>-<version>-<arch>-<build>_<-tag->.txz
 ```
-Where <tag> = slack<slackware_environment>_<release_date>_sai
+Where <-tag-> = slack<slackware_environment>_<release_date>_sai
 * <slackware_environment> = current
 * <release_date> = $(date '+%d%b%y')
 * sai = SAIRPi Project ID tag (3 characters) for Slackware packages created by the project
