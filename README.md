@@ -123,7 +123,7 @@ Where <-tag-> = slack<slackware_environment>_<release_date>_sai
 * <release_date> = $(date '+%d%b%y')
 * sai = SAIRPi Project ID tag (3 characters) for Slackware packages created by the project
 
-Each package has a corresponding `.md5` checksum file. On completion, all built packages are copied to `/tmp/Hailo-10H_sbopkg_YYYYMMDD-HHMMSS/` directory on the host system.
+Each package has a corresponding `.md5` checksum file. On completion, all built packages are copied to `/tmp/Hailo-10H_sbopkg_YYYYMMDD-HHMMSS/` directory on the host system for convenience and manageability.
 
 ---
 
