@@ -3,7 +3,7 @@
 # SAIRPi Project - Slackware AI on Raspberry Pi
 # https://sairpi.penthux.net
 #
-# HAILO.SlackBuild chroot build [stage 2]
+# HAILO.SlackBuild chroot build environment [stage 2]
 #
 # Slackware AArch64 Linux build process for HailoRT software on the 
 # Hailo-10H AI Accelerator Module installed on a Raspberry Pi 5.
@@ -83,6 +83,8 @@ log "Run build-legacy-cmake-source.sh ..."
 log "Legacy $(cmake --version | head -1) build completed ..."
 
 
+
+
 # HAILO.SlackBuild list [in-order]
 for SBPROC in \
     kernel_${RPIVERS} \
@@ -91,6 +93,7 @@ for SBPROC in \
 	${HAILOW}rt-pcie-drv-${RPIVERS} \
 	${HAILOW}rt-nnc-drv-${RPIVERS} \
 	${HAILOW}rt-10h-firmware \
+	rpi-kernel-source \
 	; do
 
 # Build-list output aesthetics

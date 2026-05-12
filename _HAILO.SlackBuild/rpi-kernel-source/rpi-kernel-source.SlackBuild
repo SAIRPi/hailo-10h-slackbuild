@@ -1,0 +1,143 @@
+#!/bin/bash
+#
+# SAIRPi Project - Slackware AI on Raspberry Pi
+# https://sairpi.penthux.net
+#
+# HAILO.SlackBuild [Stage 2]
+#
+# rpi-kernel-source.SlackBuild
+#
+# This script creates a Slackware package from the Raspberry Pi Linux
+# kernel source used in the HailoRT batch build process.
+#
+###
+#
+# MIT License
+# 
+# Copyright (c) 2026 SAIRPi Project
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a 
+# copy of this software and associated documentation files (the "Software"), 
+# to deal in the Software without restriction, including without limitation 
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the 
+# Software is furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in 
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
+# IN THE SOFTWARE.
+#
+###
+
+
+# Preconditions
+[ ! -f "../.settings.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : SETTINGS file not found!" && exit 1
+[ ! -f "../.functions.inc" ] && echo "ERROR: ${BASH_SOURCE[0]} : FUNCTIONS file not found!" && exit 1
+
+# Load settings
+. "../.settings.inc"
+
+# Load functions
+. "../.functions.inc"
+
+# Variables
+CWD="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+PRGNAM="rpi-kernel-source"
+PROCSS="$(basename "${BASH_SOURCE[0]}")"
+OUTPUT="${TMP}"
+
+# Package dirs
+PKGDIR_SOURCE="${PKGTMP}/${PRGNAM}"
+
+# Substitute and export ARCH
+SUBARCH="${ARCH:?null_value}"
+export SUBARCH
+
+# Unset ARCH while building Linux kernel source
+unset ARCH
+
+# Check Linux kernel source version
+getKRNLSRCVERS
+
+# Special bulletins
+set -e 
+IFS="$(printf '\n\t')"
+
+# Start clean
+rm -rf "${PKGDIR_SOURCE}"
+mkdir -p "${PKGDIR_SOURCE}/install" "${PKGDIR_SOURCE}/usr/src" "${PKGDIR_SOURCE}/usr/doc/${PRGNAM}-${VERSION}/"
+
+# Copy kernel source dir to PKG
+log "Copying Linux kernel ${VERSION} source to package directory ..."
+rsync -a --delete --info=progress2 "${LINUX_SOURCE_DIR}/" "${PKGDIR_SOURCE}"/usr/src/linux-"${VERSION}"
+cd "${PKGDIR_SOURCE}/usr/src/linux-${VERSION}"
+
+# Make clean and prepare Linux kernel source
+log "Sanitise kernel ${VERSION} source in package directory ..."
+make clean
+log "Preparing kernel ${VERSION} source in package directory ..."
+make prepare
+
+# Delete any kernel *Image(s) in the PKGDIR source
+log "Deleting any kernel *Image data in PKG ..."
+find . -name "*Image" -exec rm -fv "{}" \;
+# Remove any make config-version and .git data [etc.]
+log "Scanning for kernel config-version and .git data in PKG ..."
+rm -fv .clang-format .cocciconfig .config.old .get_maintainer.ignore .mailmap .version
+find . -name "*.cmd" -print0 | xargs -0 /bin/rm -rvf
+find . -name ".tmp*" -print0 | xargs -0 /bin/rm -rvf
+find . -name "*.git*" -print0 | xargs -0 /bin/rm -rvf
+rm -fv .*.d
+
+# Set sane file ownership and permissions
+log "Setting sane file ownerships and permissions in package files ... "
+chown -R root:root .
+chmod -R og-w .
+
+# Copy Linux kernel .config to PKG dir
+cat <"${LINUX_SOURCE_DIR}/.config" > "${PKGDIR_SOURCE}/usr/src/linux-${VERSION}/.config"
+
+# Copy build script to pkg usr/doc
+cp -a "${CWD}/${PROCSS}" "${PKGDIR_SOURCE}/usr/doc/${PRGNAM}-${VERSION}/"
+log "${PROCSS} copied to usr/doc ..."
+
+# Create kernel doinst.sh
+log "Creating kernel_${RPIVERS} package doinst.sh ..."
+cp -a "${CWD}/doinst.sh" "${PKGDIR_SOURCE}/install/doinst.sh"
+log "kernel_${RPIVERS} package doinst.sh created ..."
+
+# Create kernel pkg slack-desc file
+# Replace TAGS in slack-desc and copy to pkg dir
+log "Creating kernel_${RPIVERS} package slack-desc ..."
+sed -e "s/@MARQUE@/${MARQUE}/g" \
+	-e "s/@VERSION@/${VERSION}/g" \
+    -e "s/@PIVER@/${PIVER}/g" \
+    -e "s|@SAIRPiURL@|${SAIRPiURL}|g" \
+    -e "s/@BUILDREF_ID@/${BUILDREF_ID}/g" \
+	"${CWD}/slack-desc" > "${PKGDIR_SOURCE}/install/slack-desc"
+log "New kernel_${RPIVERS} slack-desc file created ..."
+
+# Create kernel source pkg
+log "Creating ${PRGNAM}-${VERSION}-${SUBARCH}-${BUILD}_${TAG}.${PKGTYPE:-txz} ..."
+cd "${PKGDIR_SOURCE}"
+/sbin/makepkg -l y -c n "${OUTPUT}/${PRGNAM}-${VERSION}-${SUBARCH}-${BUILD}_${TAG}.${PKGTYPE:-txz}"
+log "Package ${PRGNAM}-${VERSION}-${SUBARCH}-${BUILD}_${TAG}.${PKGTYPE:-txz} created ..."
+cd "${OUTPUT}"
+/bin/md5sum "${PRGNAM}-${VERSION}-${SUBARCH}-${BUILD}_${TAG}.${PKGTYPE:-txz}" > \
+  "${OUTPUT}/${PRGNAM}-${VERSION}-${SUBARCH}-${BUILD}_${TAG}.md5"
+log "Linux kernel source package checksum created ..."
+
+# Output kernel-source process confirmation
+log "Linux kernel ${VERSION} source package completed ..."
+
+# done
+exit 0
+
+#EOF<*>

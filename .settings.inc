@@ -29,6 +29,7 @@ HAILORT_DRIVERS_BRANCH="master"
 BUILD="1"
 
 # Local server IP address [Slackware mirror repository]
+# Also set SLACKWAREA64_LOCAL to correct PATH
 LOCALSERVER="192.168.1.242"
 
 ###############################################################
@@ -64,8 +65,14 @@ CHRDIR="${TMP}/${HAILOW}-chroot"
 PKGTMP="${TMP}/SBo"
 OUTPUT="${TMP}"
 
-# chroot pkg dir
+# chroot PKG dir
 FORGEPKGTMP="${PKGTMP}/chroot-pkg-forge"
+
+# Slackware PKG compression format [ txz | tgz ]
+PKGTYPE="txz"
+
+# Slackware PKG TAG
+TAG="slack${SLACKVERS}_${RELVER}_sai"
 
 # Source dirs
 RPI_GITHUB_REPO="https://github.com/raspberrypi"
@@ -125,8 +132,5 @@ MULTIJOB="-j$(nproc)"
 SLACKWAREA64_LOCAL="http://${LOCALSERVER}/slackwarearm/slackwareaarch64-${SLACKVERS}"
 SLACKWAREA64_URL1="https://slackware.uk/slackwarearm/slackwareaarch64-${SLACKVERS}"
 SLACKWAREA64_URL2="https://mirror.slackbuilds.org/slackwarearm/slackwareaarch64-${SLACKVERS}"
-
-# Slackware package TAG
-TAG="slack${SLACKVERS}_${RELVER}_sai"
 
 # EOF<*>

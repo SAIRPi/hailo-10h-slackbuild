@@ -31,6 +31,7 @@ HAILORT_DRIVERS_BRANCH="master"
 BUILD="1"
 
 # Local server IP address [Slackware mirror repository]
+# Also set SLACKWAREA64_LOCAL to correct PATH
 LOCALSERVER="192.168.1.242"
 
 ###############################################################
@@ -67,8 +68,14 @@ CHRDIR="${TMP}/${HAINAM}-chroot"
 PKGTMP="${TMP}/SBo"
 OUTPUT="${TMP}"
 
-# CHROOT pkg dir
+# chroot PKG dir
 FORGEPKGTMP="${PKGTMP}/chroot-pkg-forge"
+
+# Slackware PKG compression format [ txz | tgz ]
+PKGTYPE="txz"
+
+# Slackware PKG TAG
+TAG="slack${SLACKVERS}_${RELVER}_sai"
 
 # Source dirs
 RPI_GITHUB_REPO="https://github.com/raspberrypi"
@@ -98,24 +105,12 @@ HOSTCPUREV="$(cat </proc/cpuinfo | grep Revision | cut -d' ' -f2)"
 HOSTCPUSER="$(cat </proc/cpuinfo | grep Serial | cut -d' ' -f2)"
 
 # Determine settings from RPIVERS for build params and log output
-if [ "${RPIVERS}" = "rpi" ]; then
-    echo -e "[!] ERROR: ${BASH_SOURCE[0]} : ${MARQUE}.SlackBuild cannot be built on a Raspberry Pi (1) ..."
-	exit 1
-elif [ "${RPIVERS}" = "rpi2" ]; then
-    echo -e "[!] ERROR: ${BASH_SOURCE[0]} : ${MARQUE}.SlackBuild cannot be built on a Raspberry Pi 2 ..."
-	exit 1
-elif [ "${RPIVERS}" = "rpi3" ]; then
-    echo -e "[!] ERROR: ${BASH_SOURCE[0]} : ${MARQUE}.SlackBuild cannot be built on a Raspberry Pi 3 ..."
-	exit 1
-elif [ "${RPIVERS}" = "rpi4" ]; then
-    echo -e "[!] ERROR: ${BASH_SOURCE[0]} : ${MARQUE}.SlackBuild cannot be built on a Raspberry Pi 4 ..."
-	exit 1
-elif [ "${RPIVERS}" = "rpi5" ]; then
+if [ "${RPIVERS}" = "rpi5" ]; then
     PIVER="5"
     SAIRPID="${MARQUE}${PIVER}"
 else
     echo "[!] ERROR: ${BASH_SOURCE[0]} : RPIVERS not set correctly! "
-    echo -e " + > RPIVERS not correctly defined - ${MARQUE}.SlackBuild has terminated!\n"
+    echo -e " + > RPIVERS not correctly defined - ${HAILOW}.SlackBuild has terminated!\n"
     exit 1
 fi
 
@@ -134,8 +129,5 @@ SLACKWAREA64_URL2="https://mirror.slackbuilds.org/slackwarearm/slackwareaarch64-
 CMAKE_LEGACY_VER="3.31.12"
 CMAKE_LEGACY_GITHUB_URL="https://github.com/Kitware/CMake/archive/refs/tags/v${CMAKE_LEGACY_VER}.tar.gz"
 CMAKE_LEGACY_INSTALL_DIR="/usr/local/cmake-$(echo "${CMAKE_LEGACY_VER}" | cut -d '.' -f1,2)"
-
-# Slackware package TAG
-TAG="slack${SLACKVERS}_${RELVER}_sai"
 
 # EOF<*>

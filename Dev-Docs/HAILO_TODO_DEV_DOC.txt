@@ -7,14 +7,14 @@
 # Platform : Raspberry Pi 5 (AArch64 / armv8)
 # OS       : Slackware AArch64 -current
 # Hardware : Hailo-10H M.2 AI Accelerator Module
-# Linux    : kernel 6.18.26
+# Linux    : kernel 6.18.29
 # HailoRT  : v5.3.0
 #
 # This document records outstanding tasks, issues and items requiring
 # attention during the SAIRPi/HAILO build development process.
 #
 # Maintainer: sairpi.project@penthux.net
-# Updated   : 2026-05-11
+# Updated   : 2026-05-12
 ###############################################################################
 
 
@@ -103,8 +103,24 @@ Action required:
   Needs discussing and creating.
   
   * Hailo-10H SlackBuild is not same user-base target as SARPi. If Hailo
-  didn't lock RT build to cmake 3.3, a control script would be an excellent 
+  didn't lock RT source to cmake 3.3x, a control script would be an good 
   idea.
+
+------
+
+# TODO 006 - PROVIDE KERNEL SOURCE PACKAGE
+
+Status  : DONE 2026-05-12
+Priority: HIGH
+
+Description:
+  Raspberry Pi Linux kernel source used in creating HailoRT build packages.
+
+Action required:
+  Needs creating and including in the hailo-10h.SlackBuild [stage 2] process.
+  Strip, clean, and prepare before packaging. As per FOSS GPL-2 mandate, and 
+  as discussed, provide recipient users with the Linux source that the kernel, 
+  headers, and modules are built from.
 
 ------
 

@@ -14,9 +14,9 @@ Once each run of the build process is executed it requires an initial input sele
 
 It involves a two-stage build process:
 
-**Stage 1** runs on the Raspberry Pi 5 host. It downloads all sources (Raspberry Pi Linux kernel, boot firmware, HailoRT, HailoRT drivers, HailoRT firmware), downloads and installs Slackware AArch64 packages and [SARPi Project](https://sarpi.penthux.net/index.php?p=downloads) board support packages for the Raspberry Pi 5, into a created chroot directory: `/tmp/hailo-chroot`, then invokes Stage 2.
+**Stage 1**: hailo-10h.SlackBuild runs on the Raspberry Pi 5 host. It downloads all sources (Raspberry Pi Linux kernel, boot firmware, HailoRT, HailoRT drivers, HailoRT firmware), downloads and installs Slackware AArch64 packages and [SARPi Project](https://sarpi.penthux.net/index.php?p=downloads) board support packages for the Raspberry Pi 5, into a created chroot directory: `/tmp/hailo-chroot`, then invokes Stage 2.
 
-**Stage 2** runs inside the chroot. It builds cmake 3.31.12 from source and installs it into `/usr/bin` (which is required because HailoRT source is currently incompatible with cmake 4.x), builds the Raspberry Pi Linux kernel 6.18.x with headers and modules, HailoRT runtime software, HailoRT PCIe and NNC drivers, and packages the Raspberry Pi boot firmware and Hailo-10H device firmware. Then it creates Slackware packages from the compiled sources and downloaded firmware.
+**Stage 2**: hailo.SlackBuild runs inside the chroot. It builds cmake 3.31.12 from source and installs it into `/usr/bin` (which is required because HailoRT source is currently incompatible with cmake 4.x), builds the Raspberry Pi Linux kernel 6.18.x with headers and modules, HailoRT runtime software, HailoRT PCIe and NNC drivers, and packages the Raspberry Pi boot firmware and Hailo-10H device firmware. Then it creates Slackware packages from the compiled sources and downloaded firmware, including the Raspberry Pi Linux kernel source.
 
 - Included in stage 1 and 2 are .settings.inc files which contain settings that can be modified by the user. See: **Configuration** in this README.
 - SARPi board support packages are required to build legacy cmake 3.32.12 source in the chroot environment.
@@ -105,14 +105,15 @@ PRETTY_NAME="Slackware 15.0 aarch64 (post 15.0 -current)"
 
 | Package | Description |
 |---|---|
-| `kernel_rpi5` | Raspberry Pi Linux kernel (Image.gz + DTBs) |
+| `kernel_rpi5` | Raspberry Pi Linux kernel (Image.gz) |
 | `kernel-modules-rpi5` | Kernel modules |
 | `kernel-headers-rpi5` | Kernel headers |
-| `rpi5-boot-firmware` | Raspberry Pi boot firmware blobs with config.txt.new |
 | `hailort_rpi5` | HailoRT runtime library (libhailort, hailortcli) |
 | `hailort-pcie-drv-rpi5` | HailoRT PCIe driver (hailo1x_pci.ko) |
 | `hailort-nnc-drv-rpi5` | HailoRT integrated NNC driver (hailo_integrated_nnc.ko) |
 | `hailort-10h-firmware` | Hailo-10H device firmware |
+| `rpi5-boot-firmware` | Raspberry Pi boot firmware blobs with config.txt.new |
+| `rpi-kernel-source` | Raspberry Pi Linux kernel source |
 
 Packages follow the Slackware package file naming convention with an additional custom tag suffix:
 ```

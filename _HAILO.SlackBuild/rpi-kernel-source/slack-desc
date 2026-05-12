@@ -1,0 +1,19 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description.  Line
+# up the first '|' above the ':' following the base package name, and the '|'
+# on the right side marks the last column you can put a character in.  You must
+# make exactly 11 lines for the formatting to be correct.  It's also
+# customary to leave one space after the ':' except on otherwise blank lines.
+
+                 |-----handy-ruler------------------------------------------------------|
+rpi-kernel-source: rpi-kernel-source (Linux kernel @VERSION@ source)
+rpi-kernel-source:
+rpi-kernel-source: This is the source code for Linus Torvalds' Linux kernel, which has
+rpi-kernel-source: been modified for the Raspberry Pi @PIVER@. This kernel source was used to 
+rpi-kernel-source: build  packages. This source is available to downloaded from the 
+rpi-kernel-source: official Raspberry Pi GitHub repository:
+rpi-kernel-source: https://github.com/raspberrypi/linux 
+rpi-kernel-source:
+rpi-kernel-source:
+rpi-kernel-source: @MARQUE@ Project - @SAIRPiURL@
+rpi-kernel-source: Build Ref: @BUILDREF_ID@
