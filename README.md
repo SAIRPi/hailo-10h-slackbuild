@@ -182,7 +182,7 @@ user@slackware:/tmp/_hailo-10h.SlackBuild# tree -a
 │   │   ├── doinst.sh
 │   │   ├── kernel_rpi5.SlackBuild
 │   │   └── slack-desc
-│   └── rpi5-boot-firmware
+│   ├── rpi5-boot-firmware
 │   │   ├── config.txt.new
 │   │   ├── doinst.sh
 │   │   ├── rpi5-boot-firmware.SlackBuild
