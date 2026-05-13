@@ -183,10 +183,14 @@ user@slackware:/tmp/_hailo-10h.SlackBuild# tree -a
 │   │   ├── kernel_rpi5.SlackBuild
 │   │   └── slack-desc
 │   └── rpi5-boot-firmware
-│       ├── config.txt.new
-│       ├── doinst.sh
-│       ├── rpi5-boot-firmware.SlackBuild
-│       └── slack-desc
+│   |   ├── config.txt.new
+│   |   ├── doinst.sh
+│   |   ├── rpi5-boot-firmware.SlackBuild
+│   |   └── slack-desc
+│   └── rpi-kernel-source
+│   |   ├── doinst.sh
+│   |   ├── rpi-kernel-source.SlackBuild
+│   |   └── slack-desc
 ├── chroot-pkg-forge.sh
 └── hailo-10h.SlackBuild
 ```
